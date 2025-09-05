@@ -31,6 +31,6 @@
 		<java.version>24</java.version>
 	</properties>
 	<modules>
-
+		<module>user</module>
 	</modules>
 </project>
