@@ -3,7 +3,7 @@ package com.platformone.train.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "route")
@@ -13,29 +13,27 @@ public class Route {
     private long routeId;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "train_id",nullable = false)
+    @JoinColumn(name = "train_id", nullable = false)
     @JsonIgnore
     private Train train;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "station_id",nullable = false)
+    @JoinColumn(name = "station_id", nullable = false)
     private Station station;
 
     @Column(nullable = false)
     private int sequenceNum;
 
     @Column(nullable = false)
-    private Instant arrivalTime;
+    private LocalDateTime arrivalTime;
 
     @Column(nullable = false)
-    private Instant departureTime;
+    private LocalDateTime departureTime;
 
     protected Route() {
     }
 
-    public Route(Train train, Station station, int sequenceNum, Instant arrivalTime, Instant departureTime) {
-        this.train = train;
-        this.station = station;
+    public Route(int sequenceNum, LocalDateTime arrivalTime, LocalDateTime departureTime) {
         this.sequenceNum = sequenceNum;
         this.arrivalTime = arrivalTime;
         this.departureTime = departureTime;
@@ -69,19 +67,19 @@ public class Route {
         this.sequenceNum = sequenceNum;
     }
 
-    public Instant getArrivalTime() {
+    public LocalDateTime getArrivalTime() {
         return arrivalTime;
     }
 
-    public void setArrivalTime(Instant arrivalTime) {
+    public void setArrivalTime(LocalDateTime arrivalTime) {
         this.arrivalTime = arrivalTime;
     }
 
-    public Instant getDepartureTime() {
+    public LocalDateTime getDepartureTime() {
         return departureTime;
     }
 
-    public void setDepartureTime(Instant departureTime) {
+    public void setDepartureTime(LocalDateTime departureTime) {
         this.departureTime = departureTime;
     }
 

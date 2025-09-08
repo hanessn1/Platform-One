@@ -29,10 +29,9 @@ public class Train {
     protected Train() {
     }
 
-    public Train(String name, TrainType type, List<Route> routes) {
+    public Train(String name, TrainType type) {
         this.name = name;
         this.type = type;
-        this.routes = routes;
     }
 
     public long getTrainId() {

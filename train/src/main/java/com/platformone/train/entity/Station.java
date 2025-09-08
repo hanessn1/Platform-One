@@ -16,7 +16,7 @@ public class Station {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false,unique = true,length = 10)
+    @Column(nullable = false, unique = true, length = 10)
     private String code;
 
     @Column(nullable = false)
@@ -25,19 +25,18 @@ public class Station {
     @Column(nullable = false)
     private String state;
 
-    @OneToMany(mappedBy = "station",cascade = CascadeType.ALL,orphanRemoval = true)
+    @OneToMany(mappedBy = "station", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<Route> routes=new ArrayList<>();
+    private List<Route> routes = new ArrayList<>();
 
     protected Station() {
     }
 
-    public Station(String name, String code, String city, String state, List<Route> routes) {
+    public Station(String name, String code, String city, String state) {
         this.name = name;
         this.code = code;
         this.city = city;
         this.state = state;
-        this.routes = routes;
     }
 
     public long getStationId() {
@@ -84,12 +83,12 @@ public class Station {
         this.routes = routes;
     }
 
-    public void addRoute(Route route){
+    public void addRoute(Route route) {
         this.routes.add(route);
         route.setStation(this);
     }
 
-    public void removeRoute(Route route){
+    public void removeRoute(Route route) {
         this.routes.remove(route);
         route.setStation(null);
     }
