@@ -11,6 +11,7 @@ import com.platformone.train.service.StationService;
 import com.platformone.train.service.TrainService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 import static java.lang.Integer.max;
@@ -34,18 +35,18 @@ public class RouteServiceImpl implements RouteService {
 
     @Override
     public Route createRoute(RouteCreateRequest routeRequest) {
-        Train train=trainService.getTrainById(routeRequest.getTrainId());
-        Station station=stationService.getStationById(routeRequest.getStationId());
+        Train train = trainService.getTrainById(routeRequest.getTrainId());
+        Station station = stationService.getStationById(routeRequest.getStationId());
 
-        if(train==null || station==null) return null;
-        int maxSequenceNum=0;
-        if(!train.getRoutes().isEmpty()){
-            for(Route route: train.getRoutes()){
-                maxSequenceNum=max(maxSequenceNum,route.getSequenceNum());
+        if (train == null || station == null) return null;
+        int maxSequenceNum = 0;
+        if (!train.getRoutes().isEmpty()) {
+            for (Route route : train.getRoutes()) {
+                maxSequenceNum = max(maxSequenceNum, route.getSequenceNum());
             }
         }
-        Route route=new Route(
-                maxSequenceNum+1,
+        Route route = new Route(
+                maxSequenceNum + 1,
                 routeRequest.getArrivalTime(),
                 routeRequest.getDepartureTime()
         );
@@ -56,10 +57,10 @@ public class RouteServiceImpl implements RouteService {
 
     @Override
     public Optional<Route> updateRoute(long routeId, RouteUpdateRequest routeRequest) {
-        Train train=trainService.getTrainById(routeRequest.getTrainId());
-        Station station=stationService.getStationById(routeRequest.getStationId());
+        Train train = trainService.getTrainById(routeRequest.getTrainId());
+        Station station = stationService.getStationById(routeRequest.getStationId());
 
-        if(train==null || station==null) return Optional.empty();
+        if (train == null || station == null) return Optional.empty();
         return routeRepository.findById(routeId).map(route -> {
             route.setStation(station);
             route.setTrain(train);
@@ -72,9 +73,19 @@ public class RouteServiceImpl implements RouteService {
 
     @Override
     public boolean deleteRoute(long routeId) {
-        Route route=getRouteById(routeId);
-        if(route==null) return false;
+        Route route = getRouteById(routeId);
+        if (route == null) return false;
         routeRepository.deleteById(routeId);
         return true;
+    }
+
+    @Override
+    public List<Route> getRoutesByStationId(long stationId) {
+        return routeRepository.findByStationStationId(stationId);
+    }
+
+    @Override
+    public List<Route> getRoutesByTrainId(long trainId) {
+        return routeRepository.findByTrainTrainId(trainId);
     }
 }

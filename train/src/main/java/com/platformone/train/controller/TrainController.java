@@ -1,20 +1,25 @@
 package com.platformone.train.controller;
 
+import com.platformone.train.entity.Route;
 import com.platformone.train.entity.Train;
+import com.platformone.train.service.RouteService;
 import com.platformone.train.service.TrainService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/train")
 public class TrainController {
     private final TrainService trainService;
+    private final RouteService routeService;
 
-    public TrainController(TrainService trainService) {
+    public TrainController(TrainService trainService,RouteService routeService) {
         this.trainService = trainService;
+        this.routeService=routeService;
     }
 
     @GetMapping("/{trainId}")
@@ -48,5 +53,14 @@ public class TrainController {
             return new ResponseEntity<>("Train deleted successfully",HttpStatus.OK);
         else
             return new ResponseEntity<>("Train not found",HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/{trainId}/route")
+    public ResponseEntity<?> getRoutesByTrainId(@PathVariable long trainId){
+        Train train = trainService.getTrainById(trainId);
+        if(train==null)
+            return new ResponseEntity<>("Train id " + trainId + " not found", HttpStatus.NOT_FOUND);
+        List<Route> routes=routeService.getRoutesByTrainId(trainId);
+        return new ResponseEntity<>(routes,HttpStatus.OK);
     }
 }
