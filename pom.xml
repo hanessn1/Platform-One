@@ -32,5 +32,6 @@
 	</properties>
 	<modules>
 		<module>user</module>
+    <module>train</module>
 	</modules>
 </project>
