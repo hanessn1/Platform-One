@@ -1,8 +1,10 @@
 package com.platformone.schedule.service;
 
+import com.platformone.schedule.dto.ScheduleSearchResponseDTO;
 import com.platformone.schedule.entity.Schedule;
-import org.springframework.http.ResponseEntity;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface ScheduleService {
@@ -14,4 +16,6 @@ public interface ScheduleService {
     Optional<Schedule> updateSchedule(long scheduleId, Schedule updatedSchedule);
 
     boolean deleteSchedule(long scheduleId);
+
+    List<ScheduleSearchResponseDTO> findSchedulesBySrcDestDate(String src, String dest, LocalDate localDate);
 }

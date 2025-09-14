@@ -13,16 +13,16 @@ public class Schedule {
     private long scheduleId;
 
     private long trainId;
-    private LocalDate journeyDate;
+    private LocalDate scheduleDate;
     private int totalSeats;
     private int availableSeats;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    public Schedule(long trainId, LocalDate journeyDate, int totalSeats, int availableSeats) {
+    public Schedule(long trainId, LocalDate scheduleDate, int totalSeats, int availableSeats) {
         this.trainId = trainId;
-        this.journeyDate = journeyDate;
+        this.scheduleDate = scheduleDate;
         this.totalSeats = totalSeats;
         this.availableSeats = availableSeats;
     }
@@ -47,12 +47,12 @@ public class Schedule {
         this.trainId = trainId;
     }
 
-    public LocalDate getJourneyDate() {
-        return journeyDate;
+    public LocalDate getScheduleDate() {
+        return scheduleDate;
     }
 
-    public void setJourneyDate(LocalDate journeyDate) {
-        this.journeyDate = journeyDate;
+    public void setScheduleDate(LocalDate journeyDate) {
+        this.scheduleDate = scheduleDate;
     }
 
     public int getTotalSeats() {
@@ -80,7 +80,7 @@ public class Schedule {
         return "Schedule{" +
                 "scheduleId=" + scheduleId +
                 ", trainId=" + trainId +
-                ", journeyDate=" + journeyDate +
+                ", scheduleDate=" + scheduleDate +
                 ", totalSeats=" + totalSeats +
                 ", availableSeats=" + availableSeats +
                 ", createdAt=" + createdAt +
