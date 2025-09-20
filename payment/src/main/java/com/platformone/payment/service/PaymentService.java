@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface PaymentService {
     Payment getPaymentById(long paymentId);
 
-    Payment createdPayment(Payment newPayment);
+    Payment createPayment(Payment newPayment);
 
     Optional<Payment> updatePayment(long paymentId, Payment updatedPayment);
 
