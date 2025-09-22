@@ -1,4 +1,4 @@
-INSERT INTO users (user_id, name, email, hashed_password, created_at, updated_at)
+INSERT INTO Users (user_id, name, email, hashed_password, created_at, updated_at)
 VALUES
 (1, 'Sagnik Barman', 'sagnik@example.com', '$2a$10$abc123hashSagnik', NOW(), NOW()),
 (2, 'Amit Sharma', 'amit.sharma@example.com', '$2a$10$def456hashAmit', NOW(), NOW()),
