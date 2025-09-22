@@ -35,5 +35,6 @@
     	<module>train</module>
 		<module>schedule</module>
 		<module>payment</module>
+		<module>booking</module>
 	</modules>
 </project>
