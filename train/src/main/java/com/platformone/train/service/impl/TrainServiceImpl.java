@@ -6,6 +6,7 @@ import com.platformone.train.repository.TrainRepository;
 import com.platformone.train.service.TrainService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -47,5 +48,10 @@ public class TrainServiceImpl implements TrainService {
         if(train==null) return false;
         trainRepository.deleteById(trainId);
         return true;
+    }
+
+    @Override
+    public List<Train> getTrainBySrcDest(String src, String dest) {
+        return trainRepository.findTrainsBySrcAndDest(src,dest);
     }
 }
