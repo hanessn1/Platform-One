@@ -1,6 +1,5 @@
 package com.platformone.booking.controller;
 
-import com.platformone.booking.dto.ScheduleAndFareRequestBodyDTO;
 import com.platformone.booking.entities.Booking;
 import com.platformone.booking.service.BookingService;
 import org.springframework.http.HttpStatus;
