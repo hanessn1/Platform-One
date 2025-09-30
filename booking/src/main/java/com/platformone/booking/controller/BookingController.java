@@ -1,5 +1,6 @@
 package com.platformone.booking.controller;
 
+import com.platformone.booking.dto.ScheduleAndFareRequestBodyDTO;
 import com.platformone.booking.entities.Booking;
 import com.platformone.booking.service.BookingService;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<Booking> createdBooking(@RequestBody Booking newBooking) {
+    public ResponseEntity<Booking> createBooking(@RequestBody Booking newBooking) {
         Booking savedBooking = bookingService.createBooking(newBooking);
         return new ResponseEntity<>(savedBooking, HttpStatus.CREATED);
     }
