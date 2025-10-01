@@ -1,5 +1,6 @@
 package com.platformone.booking.controller;
 
+import com.platformone.booking.dto.BookingResponseDTO;
 import com.platformone.booking.entities.Booking;
 import com.platformone.booking.service.BookingService;
 import org.springframework.http.HttpStatus;
@@ -45,5 +46,13 @@ public class BookingController {
         if (deleted)
             return new ResponseEntity<>("Booking deleted successfully", HttpStatus.OK);
         return new ResponseEntity<>("Booking not found", HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/pnr/{pnr}")
+    public ResponseEntity<BookingResponseDTO> getBookingByPnr(@PathVariable String pnr){
+        BookingResponseDTO bookingResponseDTO=bookingService.getBookingByPnr(pnr);
+        if(bookingResponseDTO==null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(bookingResponseDTO,HttpStatus.OK);
     }
 }

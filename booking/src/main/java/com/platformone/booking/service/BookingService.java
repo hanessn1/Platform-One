@@ -1,5 +1,6 @@
 package com.platformone.booking.service;
 
+import com.platformone.booking.dto.BookingResponseDTO;
 import com.platformone.booking.entities.Booking;
 
 import java.util.Optional;
@@ -12,4 +13,6 @@ public interface BookingService {
     Optional<Booking> updateBooking(long bookingId, Booking updatedBooking);
 
     boolean deleteBooking(long bookingId);
+
+    BookingResponseDTO getBookingByPnr(String pnr);
 }
