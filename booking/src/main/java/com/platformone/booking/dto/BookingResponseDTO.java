@@ -31,6 +31,28 @@ public class BookingResponseDTO {
     public BookingResponseDTO() {
     }
 
+    public BookingResponseDTO(String pnr, BookingStatus bookingStatus, int seatNumber,
+                              double fareAmount, LocalDate bookingDate, String trainName,
+                              TrainType trainType, String sourceStationCode,
+                              String sourceStationName, LocalDateTime departureTime,
+                              String destinationStationCode, String destinationStationName,
+                              LocalDateTime arrivalTime, LocalDate journeyDate) {
+        this.pnr = pnr;
+        this.bookingStatus = bookingStatus;
+        this.seatNumber = seatNumber;
+        this.fareAmount = fareAmount;
+        this.bookingDate = bookingDate;
+        this.trainName = trainName;
+        this.trainType = trainType;
+        this.sourceStationCode = sourceStationCode;
+        this.sourceStationName = sourceStationName;
+        this.departureTime = departureTime;
+        this.destinationStationCode = destinationStationCode;
+        this.destinationStationName = destinationStationName;
+        this.arrivalTime = arrivalTime;
+        this.journeyDate = journeyDate;
+    }
+
     public String getPnr() {
         return pnr;
     }

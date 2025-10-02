@@ -2,13 +2,16 @@ package com.platformone.booking.service.impl;
 
 import com.platformone.booking.clients.ScheduleClient;
 import com.platformone.booking.clients.TrainClient;
+import com.platformone.booking.dto.BookingRequestDTO;
 import com.platformone.booking.dto.BookingResponseDTO;
 import com.platformone.booking.entities.Booking;
+import com.platformone.booking.entities.BookingStatus;
 import com.platformone.booking.external.Route;
 import com.platformone.booking.external.Schedule;
 import com.platformone.booking.external.Train;
 import com.platformone.booking.repository.BookingRepository;
 import com.platformone.booking.service.BookingService;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -36,8 +40,40 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public Booking createBooking(Booking newBooking) {
-        return bookingRepository.save(newBooking);
+    @Transactional
+    public BookingResponseDTO createBooking(BookingRequestDTO newBooking) {
+        Schedule schedule = scheduleClient.getScheduleById(newBooking.getScheduleId());
+        if (schedule == null) {
+            throw new RuntimeException("Schedule not found with id: " + newBooking.getScheduleId());
+        }
+
+        BookingStatus bookingStatus;
+        int seatNumber = 0;
+        if (schedule.getAvailableSeats() > 0) {
+            bookingStatus = BookingStatus.CONFIRMED;
+            seatNumber = schedule.getTotalSeats() - schedule.getAvailableSeats() + 1;
+
+            try {
+                scheduleClient.decrementAvailableSeats(schedule.getScheduleId());
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to update schedule availability", e);
+            }
+        } else {
+            bookingStatus = BookingStatus.WAITINGLIST;
+        }
+
+        String pnr = "PNR" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+
+        Booking booking = new Booking(
+                newBooking.getUserId(),
+                newBooking.getScheduleId(),
+                bookingStatus,
+                seatNumber,
+                pnr,
+                newBooking.getFareAmount()
+        );
+        Booking savedBooking = bookingRepository.save(booking);
+        return toResponseDTO(savedBooking);
     }
 
     @Override
@@ -66,9 +102,12 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findByPnr(pnr).orElse(null);
         if (booking == null)
             return null;
+        return toResponseDTO(booking);
+    }
 
+    private BookingResponseDTO toResponseDTO(Booking booking){
         Schedule schedule = scheduleClient.getScheduleById(booking.getScheduleId());
-        if(log.isDebugEnabled()){
+        if (log.isDebugEnabled()) {
             log.debug("Fetched schedule: {}", schedule);
         }
 
@@ -81,7 +120,7 @@ public class BookingServiceImpl implements BookingService {
         bookingResponseDTO.setBookingStatus(booking.getBookingStatus());
         bookingResponseDTO.setSeatNumber(booking.getSeatNumber());
         bookingResponseDTO.setFareAmount(booking.getFareAmount());
-        bookingResponseDTO.setBookingDate(LocalDate.ofInstant(booking.getCreatedAt(),ZoneId.systemDefault()));
+        bookingResponseDTO.setBookingDate(LocalDate.ofInstant(booking.getCreatedAt(), ZoneId.systemDefault()));
 
         bookingResponseDTO.setTrainName(train.getName());
         bookingResponseDTO.setTrainType(train.getType());
