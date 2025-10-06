@@ -76,6 +76,16 @@ public class ScheduleServiceImpl implements ScheduleService {
         }).toList();
     }
 
+    @Override
+    public Optional<Schedule> decrementAvailableSeats(long scheduleId) {
+        Schedule schedule=getScheduleById(scheduleId);
+        if(schedule.getAvailableSeats()<=0){
+            return Optional.empty();
+        }
+        schedule.setAvailableSeats(schedule.getAvailableSeats()-1);
+        return updateSchedule(scheduleId,schedule);
+    }
+
     private ScheduleSearchResponseDTO convertToScheduleSearchResponseDTO(Schedule schedule, Train train, String src, String dest) {
         Route srcRoute = train.getRoutes().stream().filter(route -> {
             return route.getStation().getCode().equalsIgnoreCase(src);
