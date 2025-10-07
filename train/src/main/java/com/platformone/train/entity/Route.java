@@ -30,7 +30,7 @@ public class Route {
     @Column(nullable = false)
     private LocalDateTime departureTime;
 
-    protected Route() {
+    public Route() {
     }
 
     public Route(int sequenceNum, LocalDateTime arrivalTime, LocalDateTime departureTime) {
