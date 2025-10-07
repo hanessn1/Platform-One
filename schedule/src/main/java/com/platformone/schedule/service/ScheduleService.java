@@ -18,4 +18,6 @@ public interface ScheduleService {
     boolean deleteSchedule(long scheduleId);
 
     List<ScheduleSearchResponseDTO> findSchedulesBySrcDestDate(String src, String dest, LocalDate localDate);
+
+    Optional<Schedule> decrementAvailableSeats(long scheduleId);
 }
