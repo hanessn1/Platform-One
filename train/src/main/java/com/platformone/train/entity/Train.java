@@ -26,7 +26,7 @@ public class Train {
     @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Route> routes = new ArrayList<>();
 
-    protected Train() {
+    public Train() {
     }
 
     public Train(String name, TrainType type) {
