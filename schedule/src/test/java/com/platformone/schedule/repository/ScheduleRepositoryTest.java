@@ -21,25 +21,27 @@ public class ScheduleRepositoryTest {
     private Schedule schedule2;
     private Schedule schedule3;
 
+    private static final LocalDate TEST_DATE = LocalDate.of(2025, 10, 6);
+
     @BeforeEach
     void setup() {
         scheduleRepository.deleteAll();
 
         schedule1 = new Schedule();
         schedule1.setTrainId(100L);
-        schedule1.setScheduleDate(LocalDate.now());
+        schedule1.setScheduleDate(TEST_DATE);
         schedule1.setTotalSeats(100);
         schedule1.setAvailableSeats(80);
 
         schedule2 = new Schedule();
         schedule2.setTrainId(200L);
-        schedule2.setScheduleDate(LocalDate.now());
+        schedule2.setScheduleDate(TEST_DATE);
         schedule2.setTotalSeats(120);
         schedule2.setAvailableSeats(110);
 
         schedule3 = new Schedule();
         schedule3.setTrainId(300L);
-        schedule3.setScheduleDate(LocalDate.now());
+        schedule3.setScheduleDate(TEST_DATE);
         schedule3.setTotalSeats(90);
         schedule3.setAvailableSeats(70);
 
@@ -49,9 +51,6 @@ public class ScheduleRepositoryTest {
 
     @Test
     void testFindByTrainIdAndJourneyDate() {
-        scheduleRepository.findAll().forEach(s -> {
-            System.out.println("TrainId=" + s.getTrainId() + " | Date=" + s.getScheduleDate());
-        });
         List<Schedule> found = scheduleRepository.findByTrainIdAndJourneyDate(
                 List.of(100L, 200L),
                 LocalDate.of(2025, 10, 6)
