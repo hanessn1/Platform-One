@@ -1,6 +1,10 @@
 package com.platformone.user.service.impl;
 
+import com.platformone.user.clients.PaymentClient;
+import com.platformone.user.dto.WalletCreateRequestDTO;
 import com.platformone.user.entity.User;
+import com.platformone.user.exception.DuplicateEmailException;
+import com.platformone.user.external.Wallet;
 import com.platformone.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +21,9 @@ import static org.mockito.Mockito.*;
 public class UserServiceImplTest {
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PaymentClient paymentClient;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -45,12 +52,49 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void testCreateUser() {
+    void testCreateUser_Successful() {
+        when(userRepository.existsByEmail(user.getEmail())).thenReturn(false);
         when(userRepository.save(any(User.class))).thenReturn(user);
+
+        Wallet wallet = new Wallet(user.getUserId(),1000.0);
+
+        when(paymentClient.initializeWallet(any(WalletCreateRequestDTO.class))).thenReturn(wallet);
+
         User created = userService.createUser(user);
+
         assertNotNull(created);
         assertEquals("Alice", created.getName());
         assertEquals("alice@example.com", created.getEmail());
+
+        verify(userRepository).save(user);
+        verify(paymentClient).initializeWallet(any(WalletCreateRequestDTO.class));
+    }
+
+    @Test
+    void testCreateUser_DuplicateEmail() {
+        when(userRepository.existsByEmail(user.getEmail())).thenReturn(true);
+
+        assertThrows(DuplicateEmailException.class, () -> userService.createUser(user));
+
+        verify(userRepository, never()).save(any());
+        verifyNoInteractions(paymentClient);
+    }
+
+    @Test
+    void testCreateUser_PaymentClientFails() {
+        when(userRepository.existsByEmail(user.getEmail())).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        when(paymentClient.initializeWallet(any(WalletCreateRequestDTO.class)))
+                .thenThrow(new RuntimeException("Payment service down"));
+
+        User created = userService.createUser(user);
+
+        assertNotNull(created);
+        assertEquals("Alice", created.getName());
+
+        verify(userRepository).save(user);
+        verify(paymentClient).initializeWallet(any(WalletCreateRequestDTO.class));
     }
 
     @Test
