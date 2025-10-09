@@ -1,6 +1,8 @@
 package com.platformone.payment.service.impl;
 
+import com.platformone.payment.dto.WalletCreateRequestDTO;
 import com.platformone.payment.entity.Wallet;
+import com.platformone.payment.exception.DuplicateWalletForUserException;
 import com.platformone.payment.repository.WalletRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,8 @@ import org.mockito.MockitoAnnotations;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -111,5 +115,28 @@ public class WalletServiceTest {
 
         assertThat(deleted).isFalse();
         verify(walletRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void initializeWallet_shouldThrowExceptionIfWalletExists() {
+        WalletCreateRequestDTO requestDTO = new WalletCreateRequestDTO(1L, 1000L);
+        when(walletRepository.existsByUserId(1L)).thenReturn(true);
+
+        assertThrows(DuplicateWalletForUserException.class, () -> walletService.initializeWallet(requestDTO));
+        verify(walletRepository, never()).save(any());
+    }
+
+    @Test
+    void initializeWallet_shouldSaveWalletIfNotExists() {
+        WalletCreateRequestDTO requestDTO = new WalletCreateRequestDTO(1L, 1000L);
+        when(walletRepository.existsByUserId(1L)).thenReturn(false);
+
+        Wallet savedWallet = new Wallet(1L, 1000L);
+        when(walletRepository.save(any())).thenReturn(savedWallet);
+
+        Wallet result = walletService.initializeWallet(requestDTO);
+        assertEquals(1L, result.getUserId());
+        assertEquals(1000L, result.getBalance());
+        verify(walletRepository, times(1)).save(any());
     }
 }
