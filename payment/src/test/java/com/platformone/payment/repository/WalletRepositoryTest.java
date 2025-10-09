@@ -60,4 +60,19 @@ class WalletRepositoryTest {
         assertThat(deleted).isNotPresent();
         assertThat(walletRepository.count()).isZero();
     }
+
+    @Test
+    void existsByUserId_shouldReturnTrueIfWalletExists() {
+        Wallet wallet = new Wallet(1L, 1000L);
+        walletRepository.save(wallet);
+
+        boolean exists = walletRepository.existsByUserId(1L);
+        assertThat(exists).isTrue();
+    }
+
+    @Test
+    void existsByUserId_shouldReturnFalseIfWalletDoesNotExist() {
+        boolean exists = walletRepository.existsByUserId(999L);
+        assertThat(exists).isFalse();
+    }
 }

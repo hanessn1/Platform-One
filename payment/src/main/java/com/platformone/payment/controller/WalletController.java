@@ -1,5 +1,6 @@
 package com.platformone.payment.controller;
 
+import com.platformone.payment.dto.WalletCreateRequestDTO;
 import com.platformone.payment.entity.Wallet;
 import com.platformone.payment.service.WalletService;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,12 @@ public class WalletController {
     @PostMapping
     public ResponseEntity<Wallet> createWallet(@RequestBody Wallet newWallet) {
         Wallet savedWallet = walletService.createWallet(newWallet);
+        return new ResponseEntity<>(savedWallet, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/init")
+    public ResponseEntity<Wallet> initializeWallet(@RequestBody WalletCreateRequestDTO requestDTO) {
+        Wallet savedWallet = walletService.initializeWallet(requestDTO);
         return new ResponseEntity<>(savedWallet, HttpStatus.CREATED);
     }
 

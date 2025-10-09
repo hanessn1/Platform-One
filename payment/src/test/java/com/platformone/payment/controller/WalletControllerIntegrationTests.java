@@ -1,7 +1,9 @@
 package com.platformone.payment.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.platformone.payment.dto.WalletCreateRequestDTO;
 import com.platformone.payment.entity.Wallet;
+import com.platformone.payment.exception.DuplicateWalletForUserException;
 import com.platformone.payment.service.WalletService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,5 +111,34 @@ class WalletControllerIntegrationTest {
         mockMvc.perform(delete("/wallet/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("Wallet not found"));
+    }
+
+    @Test
+    void initializeWallet_shouldReturnCreated() throws Exception {
+        WalletCreateRequestDTO requestDTO = new WalletCreateRequestDTO(1L, 1000L);
+        Wallet wallet = new Wallet(1L, 1000L);
+
+        when(walletService.initializeWallet(any())).thenReturn(wallet);
+
+        mockMvc.perform(post("/wallet/init")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.userId").value(1L))
+                .andExpect(jsonPath("$.balance").value(1000L));
+    }
+
+    @Test
+    void initializeWallet_shouldReturnConflictOnDuplicateWallet() throws Exception {
+        WalletCreateRequestDTO requestDTO = new WalletCreateRequestDTO(1L, 1000L);
+
+        when(walletService.initializeWallet(any()))
+                .thenThrow(new DuplicateWalletForUserException());
+
+        mockMvc.perform(post("/wallet/init")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("A wallet for this user already exists"));
     }
 }
