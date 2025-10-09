@@ -20,6 +20,10 @@ public class Train {
         this.type = type;
     }
 
+    public void setTrainId(long l) {
+        this.trainId=l;
+    }
+
     public long getTrainId() {
         return trainId;
     }
