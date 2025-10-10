@@ -38,27 +38,27 @@ class WalletRepositoryTest {
     }
 
     @Test
-    void testSaveAnotherWallet() {
+    void testSaveAnotherWallet_andFindByUserId() {
         Wallet another = new Wallet(2002L, 2500.0);
-        Wallet saved = walletRepository.save(another);
+        walletRepository.save(another);
 
-        assertThat(saved.getWalletId()).isGreaterThan(0);
-        assertThat(saved.getUserId()).isEqualTo(2002L);
-        assertThat(saved.getBalance()).isEqualTo(2500.0);
-        assertThat(saved.getCreatedAt()).isNotNull();
-        assertThat(saved.getUpdatedAt()).isNotNull();
+        Optional<Wallet> found = walletRepository.findByUserId(2002L);
+        assertThat(found).isPresent();
+        assertThat(found.get().getBalance()).isEqualTo(2500.0);
 
         long totalCount = walletRepository.count();
         assertThat(totalCount).isEqualTo(2);
     }
 
     @Test
-    void testDeleteWallet() {
+    void testDeleteWallet_andCheckExistsByUserId() {
         walletRepository.delete(wallet);
 
-        Optional<Wallet> deleted = walletRepository.findById(wallet.getWalletId());
+        Optional<Wallet> deleted = walletRepository.findByUserId(1001L);
         assertThat(deleted).isNotPresent();
-        assertThat(walletRepository.count()).isZero();
+
+        boolean exists = walletRepository.existsByUserId(1001L);
+        assertThat(exists).isFalse();
     }
 
     @Test
@@ -74,5 +74,21 @@ class WalletRepositoryTest {
     void existsByUserId_shouldReturnFalseIfWalletDoesNotExist() {
         boolean exists = walletRepository.existsByUserId(999L);
         assertThat(exists).isFalse();
+    }
+
+    @Test
+    void testFindByUserId_existingWallet() {
+        Optional<Wallet> found = walletRepository.findByUserId(1001L);
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getWalletId()).isEqualTo(wallet.getWalletId());
+        assertThat(found.get().getBalance()).isEqualTo(1000.0);
+    }
+
+    @Test
+    void testFindByUserId_nonExistingWallet() {
+        Optional<Wallet> found = walletRepository.findByUserId(9999L);
+
+        assertThat(found).isNotPresent();
     }
 }

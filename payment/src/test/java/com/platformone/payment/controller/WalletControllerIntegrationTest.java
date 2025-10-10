@@ -1,0 +1,271 @@
+package com.platformone.payment.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.platformone.payment.dto.WalletCreateRequestDTO;
+import com.platformone.payment.dto.WalletTransactionRequestDTO;
+import com.platformone.payment.entity.Wallet;
+import com.platformone.payment.exception.DuplicateWalletForUserException;
+import com.platformone.payment.exception.InsufficientBalanceException;
+import com.platformone.payment.exception.WalletNotFoundException;
+import com.platformone.payment.service.WalletService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(WalletController.class)
+class WalletControllerIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private WalletService walletService;
+
+    private Wallet wallet;
+
+    @BeforeEach
+    void setup() {
+        wallet = new Wallet(10L, 1000.0);
+    }
+
+    @Test
+    void testGetWalletById_found() throws Exception {
+        when(walletService.getWalletById(1L)).thenReturn(wallet);
+
+        mockMvc.perform(get("/wallet/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(10))
+                .andExpect(jsonPath("$.balance").value(1000.0));
+    }
+
+    @Test
+    void testGetWalletById_notFound() throws Exception {
+        when(walletService.getWalletById(99L)).thenReturn(null);
+
+        mockMvc.perform(get("/wallet/99"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testCreateWallet_success() throws Exception {
+        Wallet savedWallet = new Wallet(10L, 1000.0);
+
+        when(walletService.createWallet(any(Wallet.class))).thenReturn(savedWallet);
+
+        mockMvc.perform(post("/wallet")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(wallet)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.userId").value(10))
+                .andExpect(jsonPath("$.balance").value(1000.0));
+    }
+
+    @Test
+    void testUpdateWallet_found() throws Exception {
+        Wallet updatedWallet = new Wallet(30L, 1500.0);
+
+        when(walletService.updateWallet(eq(1L), any(Wallet.class)))
+                .thenReturn(Optional.of(updatedWallet));
+
+        mockMvc.perform(put("/wallet/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updatedWallet)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(30))
+                .andExpect(jsonPath("$.balance").value(1500.0));
+    }
+
+    @Test
+    void testUpdateWallet_notFound() throws Exception {
+        Wallet updatedWallet = new Wallet(30L, 1500.0);
+
+        when(walletService.updateWallet(eq(99L), any(Wallet.class)))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/wallet/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updatedWallet)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testDeleteWallet_found() throws Exception {
+        when(walletService.deleteWallet(1L)).thenReturn(true);
+
+        mockMvc.perform(delete("/wallet/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Wallet deleted successfully"));
+    }
+
+    @Test
+    void testDeleteWallet_notFound() throws Exception {
+        when(walletService.deleteWallet(99L)).thenReturn(false);
+
+        mockMvc.perform(delete("/wallet/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Wallet not found"));
+    }
+
+    @Test
+    void initializeWallet_shouldReturnCreated() throws Exception {
+        WalletCreateRequestDTO requestDTO = new WalletCreateRequestDTO(10L, 1000);
+
+        when(walletService.initializeWallet(any())).thenReturn(wallet);
+
+        mockMvc.perform(post("/wallet/init")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.userId").value(10L))
+                .andExpect(jsonPath("$.balance").value(1000));
+    }
+
+    @Test
+    void initializeWallet_shouldReturnConflictOnDuplicateWallet() throws Exception {
+        WalletCreateRequestDTO requestDTO = new WalletCreateRequestDTO(1L, 1000);
+
+        when(walletService.initializeWallet(any()))
+                .thenThrow(new DuplicateWalletForUserException());
+
+        mockMvc.perform(post("/wallet/init")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("A wallet for this user already exists"));
+    }
+
+    @Test
+    void addFunds_shouldReturnUpdatedWallet() throws Exception {
+        WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(6000.0, 0L);
+
+        Wallet updatedWallet = new Wallet(1001L, 6000.0);
+
+        when(walletService.addFunds(eq(1L), any(WalletTransactionRequestDTO.class)))
+                .thenReturn(updatedWallet);
+
+        mockMvc.perform(post("/wallet/1/add-funds")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(1001L))
+                .andExpect(jsonPath("$.balance").value(6000.0));
+    }
+
+    @Test
+    void addFunds_shouldReturn404IfWalletNotFound() throws Exception {
+        WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(1000.0, 0L);
+
+        when(walletService.addFunds(eq(99L), any(WalletTransactionRequestDTO.class)))
+                .thenThrow(new WalletNotFoundException("Wallet not found with id 99"));
+
+        mockMvc.perform(post("/wallet/99/add-funds")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void withdrawFunds_shouldReturnUpdatedWallet() throws Exception {
+        WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(2000.0, 0L);
+        Wallet updatedWallet = new Wallet(1001L, 3000.0);
+
+        when(walletService.withdrawFunds(eq(1L), any(WalletTransactionRequestDTO.class)))
+                .thenReturn(updatedWallet);
+
+        mockMvc.perform(post("/wallet/1/withdraw")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance").value(3000.0));
+    }
+
+    @Test
+    void withdrawFunds_shouldReturn400IfInsufficientBalance() throws Exception {
+        WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(10000.0, 0L);
+
+        when(walletService.withdrawFunds(eq(1L), any(WalletTransactionRequestDTO.class)))
+                .thenThrow(new InsufficientBalanceException("Insufficient balance for withdrawal"));
+
+        mockMvc.perform(post("/wallet/1/withdraw")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void debit_shouldReturnUpdatedWallet() throws Exception {
+        WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(500.0, 999L);
+        Wallet updatedWallet = new Wallet(1001L, 4500.0);
+
+        when(walletService.debit(eq(1L), any(WalletTransactionRequestDTO.class)))
+                .thenReturn(updatedWallet);
+
+        mockMvc.perform(post("/wallet/1/debit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance").value(4500.0));
+    }
+
+    @Test
+    void debit_shouldReturn400IfInsufficientBalance() throws Exception {
+        WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(9000.0, 111L);
+
+        when(walletService.debit(eq(1L), any(WalletTransactionRequestDTO.class)))
+                .thenThrow(new InsufficientBalanceException("Insufficient balance for debit"));
+
+        mockMvc.perform(post("/wallet/1/debit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void credit_shouldReturnUpdatedWallet() throws Exception {
+        WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(1000.0, 333L);
+        Wallet updatedWallet = new Wallet(1001L, 6000.0);
+
+        when(walletService.credit(eq(1L), any(WalletTransactionRequestDTO.class)))
+                .thenReturn(updatedWallet);
+
+        mockMvc.perform(post("/wallet/1/credit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance").value(6000));
+    }
+
+    @Test
+    void getWalletByUserId_shouldReturnWallet() throws Exception {
+        when(walletService.getWalletByUserId(1001L)).thenReturn(wallet);
+
+        mockMvc.perform(get("/wallet/user/1001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(10L))
+                .andExpect(jsonPath("$.balance").value(1000.0));
+    }
+
+    @Test
+    void getWalletByUserId_shouldReturn404IfNotFound() throws Exception {
+        when(walletService.getWalletByUserId(9999L))
+                .thenThrow(new WalletNotFoundException("Wallet not found for userId 9999"));
+
+        mockMvc.perform(get("/wallet/user/9999"))
+                .andExpect(status().isNotFound());
+    }
+}

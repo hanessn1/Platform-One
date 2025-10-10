@@ -2,22 +2,30 @@ package com.platformone.payment.service.impl;
 
 import com.platformone.payment.entity.Transaction;
 import com.platformone.payment.entity.TransactionType;
+import com.platformone.payment.entity.Wallet;
+import com.platformone.payment.exception.WalletNotFoundException;
 import com.platformone.payment.repository.TransactionRepository;
+import com.platformone.payment.repository.WalletRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class TransactionServiceTest {
     @Mock
     private TransactionRepository transactionRepository;
+
+    @Mock
+    private WalletRepository walletRepository;
 
     @InjectMocks
     private TransactionServiceImpl transactionService;
@@ -115,5 +123,36 @@ public class TransactionServiceTest {
 
         assertThat(deleted).isFalse();
         verify(transactionRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void testGetTransactionsByWalletId_WalletExists() {
+        long walletId = 1001L;
+
+        when(walletRepository.findById(walletId)).thenReturn(Optional.of(new Wallet(walletId, 0.0)));
+        when(transactionRepository.findByWalletIdOrderByCreatedAtDesc(walletId))
+                .thenReturn(List.of(existingTransaction));
+
+        List<Transaction> result = transactionService.getTransactionsByWalletId(walletId);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getWalletId()).isEqualTo(walletId);
+
+        verify(walletRepository).findById(walletId);
+        verify(transactionRepository).findByWalletIdOrderByCreatedAtDesc(walletId);
+    }
+
+    @Test
+    void testGetTransactionsByWalletId_WalletDoesNotExist() {
+        long walletId = 2002L;
+
+        when(walletRepository.findById(walletId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> transactionService.getTransactionsByWalletId(walletId))
+                .isInstanceOf(WalletNotFoundException.class)
+                .hasMessageContaining("Wallet not found with id: " + walletId);
+
+        verify(walletRepository).findById(walletId);
+        verify(transactionRepository, never()).findByWalletIdOrderByCreatedAtDesc(anyLong());
     }
 }

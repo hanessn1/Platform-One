@@ -11,9 +11,15 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long transactionId;
 
+    @Column(nullable = false, updatable = false)
     private long walletId;
+
+    @Column(nullable = true, updatable = false)
     private long paymentId;
+
     private double amount;
+
+    @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 
     @Column(updatable = false, nullable = false)
@@ -25,6 +31,12 @@ public class Transaction {
     public Transaction(long walletId, long paymentId, double amount, TransactionType transactionType) {
         this.walletId = walletId;
         this.paymentId = paymentId;
+        this.amount = amount;
+        this.transactionType = transactionType;
+    }
+
+    public Transaction(long walletId, double amount,TransactionType transactionType){
+        this.walletId = walletId;
         this.amount = amount;
         this.transactionType = transactionType;
     }

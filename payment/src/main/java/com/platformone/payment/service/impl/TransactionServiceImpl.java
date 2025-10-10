@@ -1,18 +1,27 @@
 package com.platformone.payment.service.impl;
 
 import com.platformone.payment.entity.Transaction;
+import com.platformone.payment.entity.Wallet;
+import com.platformone.payment.exception.WalletNotFoundException;
 import com.platformone.payment.repository.TransactionRepository;
+import com.platformone.payment.repository.WalletRepository;
 import com.platformone.payment.service.TransactionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class TransactionServiceImpl implements TransactionService {
+    private static final Logger log = LoggerFactory.getLogger(TransactionServiceImpl.class);
     private final TransactionRepository transactionRepository;
+    private final WalletRepository walletRepository;
 
-    public TransactionServiceImpl(TransactionRepository transactionRepository) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository, WalletRepository walletRepository1) {
         this.transactionRepository = transactionRepository;
+        this.walletRepository = walletRepository1;
     }
 
     @Override
@@ -42,5 +51,13 @@ public class TransactionServiceImpl implements TransactionService {
         if (transaction == null) return false;
         transactionRepository.deleteById(transactionId);
         return true;
+    }
+
+    @Override
+    public List<Transaction> getTransactionsByWalletId(long walletId) {
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new WalletNotFoundException("Wallet not found with id: " + walletId));
+
+        return transactionRepository.findByWalletIdOrderByCreatedAtDesc(walletId);
     }
 }

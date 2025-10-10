@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -63,5 +64,18 @@ class TransactionRepositoryTest {
         assertThat(deleted).isNotPresent();
 
         assertThat(transactionRepository.count()).isZero();
+    }
+
+    @Test
+    void testFindByWalletIdOrderByCreatedAtDesc() {
+        Transaction t1 = new Transaction(1001L, 502L, 100.0, TransactionType.DEBIT);
+        Transaction t2 = new Transaction(1001L, 503L, 200.0, TransactionType.CREDIT);
+        transactionRepository.saveAll(List.of(t1, t2));
+
+        List<Transaction> transactions = transactionRepository.findByWalletIdOrderByCreatedAtDesc(1001L);
+
+        assertThat(transactions).hasSize(3);
+        assertThat(transactions.get(0).getCreatedAt()).isAfterOrEqualTo(transactions.get(1).getCreatedAt());
+        assertThat(transactions.get(0).getWalletId()).isEqualTo(1001L);
     }
 }
