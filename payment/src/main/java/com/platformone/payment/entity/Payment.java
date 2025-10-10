@@ -11,11 +11,15 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long paymentId;
 
+    @Column(nullable = false, updatable = false)
     private long bookingId;
+
     private double amount;
+
+    @Enumerated(EnumType.STRING)
     private PaymentStatusType paymentStatusType;
 
-    @Column(nullable = false,updatable = false)
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     public Payment() {
@@ -60,8 +64,8 @@ public class Payment {
     }
 
     @PrePersist
-    public void setCreationTimeStamp(){
-        this.createdAt=Instant.now();
+    public void setCreationTimeStamp() {
+        this.createdAt = Instant.now();
     }
 
     @Override

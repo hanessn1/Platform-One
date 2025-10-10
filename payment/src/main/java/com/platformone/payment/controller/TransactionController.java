@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -45,5 +46,10 @@ public class TransactionController {
         if (deleted)
             return new ResponseEntity<>("Transaction deleted successfully", HttpStatus.OK);
         return new ResponseEntity<>("Transaction not found", HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/wallet/{walletId}")
+    public ResponseEntity<List<Transaction>> getTransactionsByWallet(@PathVariable long walletId) {
+        return ResponseEntity.ok(transactionService.getTransactionsByWalletId(walletId));
     }
 }
