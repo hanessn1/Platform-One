@@ -52,7 +52,7 @@ public class Schedule {
     }
 
     public void setScheduleDate(LocalDate journeyDate) {
-        this.scheduleDate = scheduleDate;
+        this.scheduleDate = journeyDate;
     }
 
     public int getTotalSeats() {
