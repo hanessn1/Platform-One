@@ -45,4 +45,16 @@ class UserRepositoryTest {
         userRepository.delete(user);
         assertFalse(userRepository.findById(user.getUserId()).isPresent());
     }
+
+    @Test
+    void testExistsByEmailWhenExists() {
+        boolean exists = userRepository.existsByEmail("alice@example.com");
+        assertTrue(exists, "Email should exist in the repository");
+    }
+
+    @Test
+    void testExistsByEmailWhenNotExists() {
+        boolean exists = userRepository.existsByEmail("nonexistent@example.com");
+        assertFalse(exists, "Email should not exist in the repository");
+    }
 }

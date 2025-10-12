@@ -1,6 +1,8 @@
 package com.platformone.user.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
 
@@ -10,10 +12,16 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long userId;
+
+    @NotBlank(message = "Name cannot be empty")
     private String name;
 
-    @Column(unique = true,nullable = false)
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email cannot be empty")
+    @Column(unique = true, nullable = false)
     private String email;
+
+    @NotBlank(message = "Password cannot be empty")
     private String hashedPassword;
 
     @Column(nullable = false,updatable = false)
