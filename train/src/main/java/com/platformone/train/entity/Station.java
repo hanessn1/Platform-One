@@ -29,7 +29,7 @@ public class Station {
     @JsonIgnore
     private List<Route> routes = new ArrayList<>();
 
-    protected Station() {
+    public Station() {
     }
 
     public Station(String name, String code, String city, String state) {
