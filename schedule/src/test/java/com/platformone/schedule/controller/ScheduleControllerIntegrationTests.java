@@ -39,7 +39,7 @@ public class ScheduleControllerIntegrationTests {
 
     @Test
     void getScheduleById_found() throws Exception {
-        Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 90);
+        Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 90, 1000.0);
 
         when(scheduleService.getScheduleById(123L)).thenReturn(schedule);
 
@@ -58,7 +58,7 @@ public class ScheduleControllerIntegrationTests {
 
     @Test
     void createSchedule_success() throws Exception {
-        Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 90);
+        Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 90,1000.0);
 
         when(scheduleService.createSchedule(any(Schedule.class))).thenReturn(schedule);
 
@@ -71,7 +71,7 @@ public class ScheduleControllerIntegrationTests {
 
     @Test
     void updateSchedule_found() throws Exception {
-        Schedule updatedSchedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 120, 110);
+        Schedule updatedSchedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 120, 110,1000.0);
 
         when(scheduleService.updateSchedule(eq(123L), any(Schedule.class)))
                 .thenReturn(Optional.of(updatedSchedule));
@@ -85,7 +85,7 @@ public class ScheduleControllerIntegrationTests {
 
     @Test
     void updateSchedule_notFound() throws Exception {
-        Schedule updatedSchedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 120, 110);
+        Schedule updatedSchedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 120, 110,1000.0);
 
         when(scheduleService.updateSchedule(eq(999L), any(Schedule.class)))
                 .thenReturn(Optional.empty());
@@ -120,7 +120,7 @@ public class ScheduleControllerIntegrationTests {
                 123L, 1L, "Rajdhani Express", TrainType.EXPRESS,
                 "SRC", "Source Station", LocalDateTime.of(2025, 10, 6, 10, 0),
                 "DST", "Destination Station", LocalDateTime.of(2025, 10, 6, 14, 0),
-                LocalDate.of(2025, 10, 6), 100, 90, "4 hours", 0
+                LocalDate.of(2025, 10, 6), 100, 90, 1000.0, "4 hours",0
         );
 
         when(scheduleService.findSchedulesBySrcDestDate("SRC", "DST", LocalDate.of(2025, 10, 6)))
@@ -138,7 +138,7 @@ public class ScheduleControllerIntegrationTests {
 
     @Test
     void decrementAvailableSeats_success() throws Exception {
-        Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 89);
+        Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 89,1000.0);
 
         when(scheduleService.decrementAvailableSeats(123L)).thenReturn(Optional.of(schedule));
 
@@ -152,6 +152,25 @@ public class ScheduleControllerIntegrationTests {
         when(scheduleService.decrementAvailableSeats(999L)).thenReturn(Optional.empty());
 
         mockMvc.perform(put("/schedule/999/decrement"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void incrementAvailableSeats_success() throws Exception {
+        Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 89,1000.0);
+
+        when(scheduleService.incrementAvailableSeats(123L)).thenReturn(Optional.of(schedule));
+
+        mockMvc.perform(put("/schedule/123/increment"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availableSeats").value(89));
+    }
+
+    @Test
+    void incrementAvailableSeats_failure() throws Exception {
+        when(scheduleService.incrementAvailableSeats(999L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/schedule/999/increment"))
                 .andExpect(status().isBadRequest());
     }
 }
