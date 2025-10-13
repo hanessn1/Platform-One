@@ -208,49 +208,6 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
-    void debit_shouldReturnUpdatedWallet() throws Exception {
-        WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(500.0, 999L);
-        Wallet updatedWallet = new Wallet(1001L, 4500.0);
-
-        when(walletService.debit(eq(1L), any(WalletTransactionRequestDTO.class)))
-                .thenReturn(updatedWallet);
-
-        mockMvc.perform(post("/wallet/1/debit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.balance").value(4500.0));
-    }
-
-    @Test
-    void debit_shouldReturn400IfInsufficientBalance() throws Exception {
-        WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(9000.0, 111L);
-
-        when(walletService.debit(eq(1L), any(WalletTransactionRequestDTO.class)))
-                .thenThrow(new InsufficientBalanceException("Insufficient balance for debit"));
-
-        mockMvc.perform(post("/wallet/1/debit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void credit_shouldReturnUpdatedWallet() throws Exception {
-        WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(1000.0, 333L);
-        Wallet updatedWallet = new Wallet(1001L, 6000.0);
-
-        when(walletService.credit(eq(1L), any(WalletTransactionRequestDTO.class)))
-                .thenReturn(updatedWallet);
-
-        mockMvc.perform(post("/wallet/1/credit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.balance").value(6000));
-    }
-
-    @Test
     void getWalletByUserId_shouldReturnWallet() throws Exception {
         when(walletService.getWalletByUserId(1001L)).thenReturn(wallet);
 
