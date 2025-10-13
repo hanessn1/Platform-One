@@ -21,6 +21,7 @@ public record ScheduleSearchResponseDTO(
         LocalDate journeyDate,
         int TotalSeats,
         int availableSeats,
+        double fareAmount,
         String duration,
         int dayOffset
 ) {

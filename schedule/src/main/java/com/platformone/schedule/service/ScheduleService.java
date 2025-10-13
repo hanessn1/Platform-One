@@ -20,4 +20,6 @@ public interface ScheduleService {
     List<ScheduleSearchResponseDTO> findSchedulesBySrcDestDate(String src, String dest, LocalDate localDate);
 
     Optional<Schedule> decrementAvailableSeats(long scheduleId);
+
+    Optional<Schedule> incrementAvailableSeats(long scheduleId);
 }

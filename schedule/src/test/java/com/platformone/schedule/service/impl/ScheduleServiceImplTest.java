@@ -134,6 +134,35 @@ public class ScheduleServiceImplTest {
     }
 
     @Test
+    void incrementAvailableSeats_success() {
+        Schedule s = new Schedule();
+        s.setAvailableSeats(2);
+
+        when(scheduleRepository.findById(1L)).thenReturn(Optional.of(s));
+        when(scheduleRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Optional<Schedule> result = scheduleService.incrementAvailableSeats(1L);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getAvailableSeats()).isEqualTo(3);
+        verify(scheduleRepository).save(any());
+    }
+
+    @Test
+    void incrementAvailableSeats_SeatsFull() {
+        Schedule s = new Schedule();
+        s.setAvailableSeats(100);
+        s.setTotalSeats(100);
+
+        when(scheduleRepository.findById(1L)).thenReturn(Optional.of(s));
+
+        Optional<Schedule> result = scheduleService.incrementAvailableSeats(1L);
+
+        assertThat(result).isEmpty();
+        verify(scheduleRepository, never()).save(any());
+    }
+
+    @Test
     void findSchedulesBySrcDestDate_success() {
         Train train = new Train("Rajdhani Express", TrainType.EXPRESS);
         train.setTrainId(1L);
@@ -149,7 +178,7 @@ public class ScheduleServiceImplTest {
 
         train.setRoutes(List.of(srcRoute, destRoute));
 
-        Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 90);
+        Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 90,1000.0);
 
         when(trainClient.getTrainBySrcDest("SRC", "DST")).thenReturn(List.of(train));
         when(scheduleRepository.findByTrainIdAndJourneyDate(List.of(1L), LocalDate.of(2025, 10, 6)))
