@@ -2,6 +2,7 @@ package com.platformone.user.controller;
 
 import com.platformone.user.entity.User;
 import com.platformone.user.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User newUser) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody User newUser) {
         User savedUser = userService.createUser(newUser);
         return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
     }
