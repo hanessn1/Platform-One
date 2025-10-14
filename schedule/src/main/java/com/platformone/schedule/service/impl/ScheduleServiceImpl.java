@@ -86,6 +86,16 @@ public class ScheduleServiceImpl implements ScheduleService {
         return updateSchedule(scheduleId,schedule);
     }
 
+    @Override
+    public Optional<Schedule> incrementAvailableSeats(long scheduleId) {
+        Schedule schedule=getScheduleById(scheduleId);
+        if(schedule.getAvailableSeats()==schedule.getTotalSeats()){
+            return Optional.empty();
+        }
+        schedule.setAvailableSeats(schedule.getAvailableSeats()+1);
+        return updateSchedule(scheduleId,schedule);
+    }
+
     private ScheduleSearchResponseDTO convertToScheduleSearchResponseDTO(Schedule schedule, Train train, String src, String dest) {
         Route srcRoute = train.getRoutes().stream().filter(route -> {
             return route.getStation().getCode().equalsIgnoreCase(src);
@@ -109,6 +119,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                 schedule.getScheduleDate(),
                 schedule.getTotalSeats(),
                 schedule.getAvailableSeats(),
+                schedule.getFareAmount(),
                 calculateDuration(srcRoute.getDepartureTime(), destRoute.getArrivalTime()),
                 calculateDayOffset(srcRoute.getDepartureTime(), destRoute.getArrivalTime())
         );

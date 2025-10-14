@@ -1,0 +1,3 @@
+@echo off
+echo Starting kafka containers...
+docker compose up -d

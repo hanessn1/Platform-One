@@ -36,7 +36,7 @@ public class BookingControllerIntegrationTests {
 
     @Test
     void testGetBookingById_Found() throws Exception {
-        Booking booking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 3, "PNR12345", 600.0);
+        Booking booking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 3, "PNR12345");
         Mockito.when(bookingService.getBookingById(1L)).thenReturn(booking);
 
         mockMvc.perform(get("/booking/1"))
@@ -73,20 +73,19 @@ public class BookingControllerIntegrationTests {
 
     @Test
     void testUpdateBooking_Found() throws Exception {
-        Booking updatedBooking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 4, "PNR12345", 800.0);
+        Booking updatedBooking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 4, "PNR12345");
         Mockito.when(bookingService.updateBooking(anyLong(), any(Booking.class))).thenReturn(Optional.of(updatedBooking));
 
         mockMvc.perform(put("/booking/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatedBooking)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.seatNumber").value(4))
-                .andExpect(jsonPath("$.fareAmount").value(800.0));
+                .andExpect(jsonPath("$.seatNumber").value(4));
     }
 
     @Test
     void testUpdateBooking_NotFound() throws Exception {
-        Booking updatedBooking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 4, "PNR12345", 800.0);
+        Booking updatedBooking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 4, "PNR12345");
         Mockito.when(bookingService.updateBooking(anyLong(), any(Booking.class))).thenReturn(Optional.empty());
 
         mockMvc.perform(put("/booking/99")

@@ -25,8 +25,7 @@ public class BookingRepositoryTest {
                 101L,
                 BookingStatus.CONFIRMED,
                 5,
-                "PNR12345",
-                550.0
+                "PNR12345"
         );
         booking = bookingRepository.save(booking);
     }
@@ -47,8 +46,7 @@ public class BookingRepositoryTest {
                 102L,
                 BookingStatus.WAITINGLIST,
                 8,
-                "PNR67890",
-                750.0
+                "PNR67890"
         );
 
         Booking saved = bookingRepository.save(anotherBooking);
