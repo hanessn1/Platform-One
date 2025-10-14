@@ -10,6 +10,7 @@ on:
         branches:
             - master
             - dev
+            - 'feature/*'
 
 jobs:
     build:
@@ -56,5 +57,12 @@ jobs:
                     name: platformone-jars
                     path: target
 
+            -   name: Start containers
+                run: make docker-start
+
             -   name: Run tests
                 run: mvn test
+
+            -   name: Stop containers
+                if: always()
+                run: make docker-stop
