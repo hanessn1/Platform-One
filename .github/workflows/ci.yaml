@@ -65,6 +65,4 @@ jobs:
 
             -   name: Stop containers
                 if: always()
-                run: |
-                    chmod +x scripts/kafka-stop
-                    ./scripts/kafka-stop
+                run: make docker-stop
