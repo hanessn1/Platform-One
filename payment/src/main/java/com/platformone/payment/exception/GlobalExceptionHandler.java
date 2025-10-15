@@ -35,6 +35,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handlePaymentNotFound(PaymentNotFoundException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", ex.getMessage());
+        body.put("timestamp", Instant.now());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
         Map<String, Object> response = new HashMap<>();
