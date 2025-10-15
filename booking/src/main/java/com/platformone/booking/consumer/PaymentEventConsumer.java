@@ -4,6 +4,7 @@ import com.platformone.booking.clients.ScheduleClient;
 import com.platformone.booking.entities.Booking;
 import com.platformone.booking.entities.BookingStatus;
 import com.platformone.booking.events.PaymentFailedEvent;
+import com.platformone.booking.events.PaymentRefundedEvent;
 import com.platformone.booking.events.PaymentSucceededEvent;
 import com.platformone.booking.exception.BookingNotFoundException;
 import com.platformone.booking.repository.BookingRepository;
@@ -48,5 +49,18 @@ public class PaymentEventConsumer {
         booking.setBookingStatus(BookingStatus.FAILED);
         bookingRepository.save(booking);
         scheduleClient.incrementAvailableSeats(booking.getScheduleId());
+    }
+
+    @KafkaListener(
+            topics = "payment_refunded",
+            groupId = "booking-service",
+            containerFactory = "paymentRefundedKafkaListenerContainerFactory"
+    )
+    public void handlePaymentRefunded(PaymentRefundedEvent event) {
+        log.info("Received PaymentRefundedEvent: {}", event);
+        Booking booking = bookingRepository.findById(event.getBookingId())
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+        booking.setBookingStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
     }
 }

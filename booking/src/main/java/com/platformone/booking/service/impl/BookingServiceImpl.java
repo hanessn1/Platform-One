@@ -6,10 +6,9 @@ import com.platformone.booking.dto.BookingRequestDTO;
 import com.platformone.booking.dto.BookingResponseDTO;
 import com.platformone.booking.entities.Booking;
 import com.platformone.booking.entities.BookingStatus;
+import com.platformone.booking.events.BookingCancelledEvent;
 import com.platformone.booking.events.BookingCreatedEvent;
-import com.platformone.booking.exception.ScheduleNotFoundException;
-import com.platformone.booking.exception.ScheduleServiceUnavailableException;
-import com.platformone.booking.exception.ScheduleUpdateFailedException;
+import com.platformone.booking.exception.*;
 import com.platformone.booking.external.Route;
 import com.platformone.booking.external.Schedule;
 import com.platformone.booking.external.Train;
@@ -33,14 +32,21 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ScheduleClient scheduleClient;
     private final TrainClient trainClient;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, BookingCreatedEvent> bookingCreatedKafkaTemplate;
+    private final KafkaTemplate<String, BookingCancelledEvent> bookingCancelledKafkaTemplate;
 
-    public BookingServiceImpl(BookingRepository bookingRepository, ScheduleClient scheduleClient,
-                              TrainClient trainClient, KafkaTemplate<String,Object> kafkaTemplate1) {
+    public BookingServiceImpl(
+            BookingRepository bookingRepository,
+            ScheduleClient scheduleClient,
+            TrainClient trainClient,
+            KafkaTemplate<String, BookingCreatedEvent> bookingCreatedKafkaTemplate,
+            KafkaTemplate<String, BookingCancelledEvent> bookingCancelledKafkaTemplate
+    ) {
         this.bookingRepository = bookingRepository;
         this.scheduleClient = scheduleClient;
         this.trainClient = trainClient;
-        this.kafkaTemplate = kafkaTemplate1;
+        this.bookingCreatedKafkaTemplate = bookingCreatedKafkaTemplate;
+        this.bookingCancelledKafkaTemplate = bookingCancelledKafkaTemplate;
     }
 
     @Override
@@ -54,6 +60,9 @@ public class BookingServiceImpl implements BookingService {
         Schedule schedule;
         try {
             schedule = scheduleClient.getScheduleById(newBooking.getScheduleId());
+            if (schedule == null) {
+                throw new ScheduleNotFoundException("Schedule not found with id: " + newBooking.getScheduleId());
+            }
         } catch (FeignException.NotFound e) {
             throw new ScheduleNotFoundException("Schedule not found with id: " + newBooking.getScheduleId());
         } catch (FeignException e) {
@@ -93,7 +102,7 @@ public class BookingServiceImpl implements BookingService {
                 savedBooking.getScheduleId(),
                 schedule.getFareAmount()
         );
-        kafkaTemplate.send("booking_created",event);
+        bookingCreatedKafkaTemplate.send("booking_created",event);
 
         return toResponseDTO(savedBooking);
     }
@@ -127,6 +136,43 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findByPnr(pnr).orElse(null);
         if (booking == null)
             return null;
+        return toResponseDTO(booking);
+    }
+
+    @Override
+    public BookingResponseDTO cancelBooking(String pnr) {
+        Booking booking = bookingRepository.findByPnr(pnr).orElse(null);
+        if(booking==null){
+            throw new BookingNotFoundException("Booking not found with pnr: " + pnr);
+        }
+        if (booking.getBookingStatus() == BookingStatus.CANCELLED) {
+            throw new BookingAlreadyCancelledException("Booking is already cancelled with id: " + booking.getBookingId());
+        }
+        booking.setBookingStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+
+        Schedule schedule;
+        try {
+            schedule = scheduleClient.getScheduleById(booking.getScheduleId());
+            if (schedule == null) {
+                throw new ScheduleNotFoundException("Schedule not found with id: " + booking.getScheduleId());
+            }
+            if (booking.getSeatNumber() > 0) {
+                scheduleClient.incrementAvailableSeats(booking.getScheduleId());
+            }
+        } catch (FeignException.NotFound e) {
+            throw new ScheduleNotFoundException("Schedule not found with id: " + booking.getScheduleId());
+        } catch (FeignException e) {
+            throw new ScheduleServiceUnavailableException("Failed to increment available seats for schedule: " + booking.getScheduleId());
+        }
+
+        BookingCancelledEvent event = new BookingCancelledEvent(
+                booking.getBookingId(),
+                booking.getUserId(),
+                booking.getScheduleId(),
+                schedule.getFareAmount()
+        );
+        bookingCancelledKafkaTemplate.send("booking_cancelled", event);
         return toResponseDTO(booking);
     }
 
