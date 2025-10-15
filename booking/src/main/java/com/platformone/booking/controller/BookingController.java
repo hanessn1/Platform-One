@@ -56,4 +56,12 @@ public class BookingController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         return new ResponseEntity<>(bookingResponseDTO, HttpStatus.OK);
     }
+
+    @PostMapping("/cancel")
+    public ResponseEntity<BookingResponseDTO> cancelBooking(@RequestParam String pnr){
+        BookingResponseDTO bookingResponseDTO=bookingService.cancelBooking(pnr);
+        if(bookingResponseDTO==null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(bookingResponseDTO,HttpStatus.OK);
+    }
 }

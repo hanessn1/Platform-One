@@ -16,4 +16,6 @@ public interface BookingService {
     boolean deleteBooking(long bookingId);
 
     BookingResponseDTO getBookingByPnr(String pnr);
+
+    BookingResponseDTO cancelBooking(String pnr);
 }
