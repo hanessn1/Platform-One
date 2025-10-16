@@ -6,14 +6,19 @@ import com.platformone.booking.dto.BookingRequestDTO;
 import com.platformone.booking.dto.BookingResponseDTO;
 import com.platformone.booking.entities.Booking;
 import com.platformone.booking.entities.BookingStatus;
+import com.platformone.booking.events.BookingCancelledEvent;
+import com.platformone.booking.events.BookingCreatedEvent;
+import com.platformone.booking.exception.*;
 import com.platformone.booking.external.Route;
 import com.platformone.booking.external.Schedule;
 import com.platformone.booking.external.Train;
 import com.platformone.booking.repository.BookingRepository;
 import com.platformone.booking.service.BookingService;
+import feign.FeignException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -27,11 +32,21 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ScheduleClient scheduleClient;
     private final TrainClient trainClient;
+    private final KafkaTemplate<String, BookingCreatedEvent> bookingCreatedKafkaTemplate;
+    private final KafkaTemplate<String, BookingCancelledEvent> bookingCancelledKafkaTemplate;
 
-    public BookingServiceImpl(BookingRepository bookingRepository, ScheduleClient scheduleClient, TrainClient trainClient) {
+    public BookingServiceImpl(
+            BookingRepository bookingRepository,
+            ScheduleClient scheduleClient,
+            TrainClient trainClient,
+            KafkaTemplate<String, BookingCreatedEvent> bookingCreatedKafkaTemplate,
+            KafkaTemplate<String, BookingCancelledEvent> bookingCancelledKafkaTemplate
+    ) {
         this.bookingRepository = bookingRepository;
         this.scheduleClient = scheduleClient;
         this.trainClient = trainClient;
+        this.bookingCreatedKafkaTemplate = bookingCreatedKafkaTemplate;
+        this.bookingCancelledKafkaTemplate = bookingCancelledKafkaTemplate;
     }
 
     @Override
@@ -42,38 +57,58 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDTO createBooking(BookingRequestDTO newBooking) {
-        Schedule schedule = scheduleClient.getScheduleById(newBooking.getScheduleId());
-        if (schedule == null) {
-            throw new RuntimeException("Schedule not found with id: " + newBooking.getScheduleId());
+        Schedule schedule;
+        try {
+            schedule = scheduleClient.getScheduleById(newBooking.getScheduleId());
+            if (schedule == null) {
+                throw new ScheduleNotFoundException("Schedule not found with id: " + newBooking.getScheduleId());
+            }
+        } catch (FeignException.NotFound e) {
+            throw new ScheduleNotFoundException("Schedule not found with id: " + newBooking.getScheduleId());
+        } catch (FeignException e) {
+            throw new ScheduleServiceUnavailableException("Failed to fetch schedule info from Schedule Service");
         }
 
         BookingStatus bookingStatus;
         int seatNumber = 0;
+
         if (schedule.getAvailableSeats() > 0) {
-            bookingStatus = BookingStatus.CONFIRMED;
+            bookingStatus = BookingStatus.PROCESSING;
             seatNumber = schedule.getTotalSeats() - schedule.getAvailableSeats() + 1;
 
             try {
                 scheduleClient.decrementAvailableSeats(schedule.getScheduleId());
             } catch (Exception e) {
-                throw new IllegalStateException("Failed to update schedule availability", e);
+                throw new ScheduleUpdateFailedException("Failed to update schedule availability");
             }
         } else {
             bookingStatus = BookingStatus.WAITINGLIST;
         }
 
-        String pnr = "PNR" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        String pnr = generatePNR();
 
         Booking booking = new Booking(
                 newBooking.getUserId(),
                 newBooking.getScheduleId(),
                 bookingStatus,
                 seatNumber,
-                pnr,
-                newBooking.getFareAmount()
+                pnr
         );
         Booking savedBooking = bookingRepository.save(booking);
+
+        BookingCreatedEvent event = new BookingCreatedEvent(
+                savedBooking.getBookingId(),
+                savedBooking.getUserId(),
+                savedBooking.getScheduleId(),
+                schedule.getFareAmount()
+        );
+        bookingCreatedKafkaTemplate.send("booking_created",event);
+
         return toResponseDTO(savedBooking);
+    }
+
+    private String generatePNR(){
+        return "PNR" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
     }
 
     @Override
@@ -81,7 +116,6 @@ public class BookingServiceImpl implements BookingService {
         return bookingRepository.findById(bookingId).map(booking -> {
             booking.setBookingStatus(updatedBooking.getBookingStatus());
             booking.setPnr(updatedBooking.getPnr());
-            booking.setFareAmount(updatedBooking.getFareAmount());
             booking.setScheduleId(updatedBooking.getScheduleId());
             booking.setSeatNumber(updatedBooking.getSeatNumber());
             booking.setUserId(updatedBooking.getUserId());
@@ -105,7 +139,44 @@ public class BookingServiceImpl implements BookingService {
         return toResponseDTO(booking);
     }
 
-    private BookingResponseDTO toResponseDTO(Booking booking){
+    @Override
+    public BookingResponseDTO cancelBooking(String pnr) {
+        Booking booking = bookingRepository.findByPnr(pnr).orElse(null);
+        if(booking==null){
+            throw new BookingNotFoundException("Booking not found with pnr: " + pnr);
+        }
+        if (booking.getBookingStatus() == BookingStatus.CANCELLED) {
+            throw new BookingAlreadyCancelledException("Booking is already cancelled with id: " + booking.getBookingId());
+        }
+        booking.setBookingStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+
+        Schedule schedule;
+        try {
+            schedule = scheduleClient.getScheduleById(booking.getScheduleId());
+            if (schedule == null) {
+                throw new ScheduleNotFoundException("Schedule not found with id: " + booking.getScheduleId());
+            }
+            if (booking.getSeatNumber() > 0) {
+                scheduleClient.incrementAvailableSeats(booking.getScheduleId());
+            }
+        } catch (FeignException.NotFound e) {
+            throw new ScheduleNotFoundException("Schedule not found with id: " + booking.getScheduleId());
+        } catch (FeignException e) {
+            throw new ScheduleServiceUnavailableException("Failed to increment available seats for schedule: " + booking.getScheduleId());
+        }
+
+        BookingCancelledEvent event = new BookingCancelledEvent(
+                booking.getBookingId(),
+                booking.getUserId(),
+                booking.getScheduleId(),
+                schedule.getFareAmount()
+        );
+        bookingCancelledKafkaTemplate.send("booking_cancelled", event);
+        return toResponseDTO(booking);
+    }
+
+    private BookingResponseDTO toResponseDTO(Booking booking) {
         Schedule schedule = scheduleClient.getScheduleById(booking.getScheduleId());
         if (log.isDebugEnabled()) {
             log.debug("Fetched schedule: {}", schedule);
@@ -119,7 +190,7 @@ public class BookingServiceImpl implements BookingService {
         bookingResponseDTO.setPnr(booking.getPnr());
         bookingResponseDTO.setBookingStatus(booking.getBookingStatus());
         bookingResponseDTO.setSeatNumber(booking.getSeatNumber());
-        bookingResponseDTO.setFareAmount(booking.getFareAmount());
+        bookingResponseDTO.setFareAmount(schedule.getFareAmount());
         bookingResponseDTO.setBookingDate(LocalDate.ofInstant(booking.getCreatedAt(), ZoneId.systemDefault()));
 
         bookingResponseDTO.setTrainName(train.getName());

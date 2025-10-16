@@ -14,4 +14,7 @@ public interface ScheduleClient {
 
     @PutMapping("/schedule/{scheduleId}/decrement")
     public ResponseEntity<Schedule> decrementAvailableSeats(@PathVariable long scheduleId);
+
+    @PutMapping("/schedule/{scheduleId}/increment")
+    public ResponseEntity<Schedule> incrementAvailableSeats(@PathVariable long scheduleId);
 }

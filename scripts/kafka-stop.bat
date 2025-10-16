@@ -1,0 +1,3 @@
+@echo off
+echo Stopping Kafka container...
+docker compose down

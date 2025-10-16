@@ -1,6 +1,7 @@
 package com.platformone.payment.controller;
 
 import com.platformone.payment.dto.WalletCreateRequestDTO;
+import com.platformone.payment.dto.WalletTransactionRequestDTO;
 import com.platformone.payment.entity.Wallet;
 import com.platformone.payment.service.WalletService;
 import org.springframework.http.HttpStatus;
@@ -52,5 +53,23 @@ public class WalletController {
         if (deleted)
             return new ResponseEntity<>("Wallet deleted successfully", HttpStatus.OK);
         return new ResponseEntity<>("Wallet not found", HttpStatus.NOT_FOUND);
+    }
+
+    @PostMapping("/{walletId}/add-funds")
+    public ResponseEntity<Wallet> addFunds(@PathVariable long walletId, @RequestBody WalletTransactionRequestDTO requestDTO) {
+        Wallet updated = walletService.addFunds(walletId, requestDTO);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{walletId}/withdraw")
+    public ResponseEntity<Wallet> withdrawFunds(@PathVariable long walletId, @RequestBody WalletTransactionRequestDTO requestDTO) {
+        Wallet updated = walletService.withdrawFunds(walletId, requestDTO);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Wallet> getWalletByUserId(@PathVariable long userId) {
+        Wallet wallet = walletService.getWalletByUserId(userId);
+        return ResponseEntity.ok(wallet);
     }
 }

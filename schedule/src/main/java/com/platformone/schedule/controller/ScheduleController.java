@@ -66,8 +66,17 @@ public class ScheduleController {
     }
 
     @PutMapping("/{scheduleId}/decrement")
-    public ResponseEntity<Schedule> decrementAvailableSeats(@PathVariable long scheduleId){
+    public ResponseEntity<Schedule> decrementAvailableSeats(@PathVariable long scheduleId) {
         Optional<Schedule> schedule = scheduleService.decrementAvailableSeats(scheduleId);
+        if (schedule.isPresent())
+            return new ResponseEntity<>(schedule.get(), HttpStatus.OK);
+        else
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    @PutMapping("/{scheduleId}/increment")
+    public ResponseEntity<Schedule> incrementAvailableSeats(@PathVariable long scheduleId) {
+        Optional<Schedule> schedule = scheduleService.incrementAvailableSeats(scheduleId);
         if (schedule.isPresent())
             return new ResponseEntity<>(schedule.get(), HttpStatus.OK);
         else

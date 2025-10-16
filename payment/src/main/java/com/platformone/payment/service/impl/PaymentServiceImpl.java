@@ -1,6 +1,7 @@
 package com.platformone.payment.service.impl;
 
 import com.platformone.payment.entity.Payment;
+import com.platformone.payment.exception.PaymentNotFoundException;
 import com.platformone.payment.repository.PaymentRepository;
 import com.platformone.payment.service.PaymentService;
 import org.springframework.stereotype.Service;
@@ -41,5 +42,11 @@ public class PaymentServiceImpl implements PaymentService {
         if (payment == null) return false;
         paymentRepository.deleteById(paymentId);
         return true;
+    }
+
+    @Override
+    public Payment getPaymentByBookingId(long bookingId) {
+        return paymentRepository.findByBookingId(bookingId)
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found for bookingId " + bookingId));
     }
 }

@@ -26,18 +26,15 @@ public class Booking {
     @Column(updatable = true, nullable = false)
     private Instant updatedAt;
 
-    private double fareAmount;
-
     protected Booking() {
     }
 
-    public Booking(long userId, long scheduleId, BookingStatus bookingStatus, int seatNumber, String pnr, double fareAmount) {
+    public Booking(long userId, long scheduleId, BookingStatus bookingStatus, int seatNumber, String pnr) {
         this.userId = userId;
         this.scheduleId = scheduleId;
         this.bookingStatus = bookingStatus;
         this.seatNumber = seatNumber;
         this.pnr = pnr;
-        this.fareAmount = fareAmount;
     }
 
     public long getBookingId() {
@@ -92,14 +89,6 @@ public class Booking {
         return updatedAt;
     }
 
-    public double getFareAmount() {
-        return fareAmount;
-    }
-
-    public void setFareAmount(double fareAmount) {
-        this.fareAmount = fareAmount;
-    }
-
     @PrePersist
     public void setCreationTimestamp(){
         Instant now=Instant.now();
@@ -123,7 +112,6 @@ public class Booking {
                 ", pnr='" + pnr + '\'' +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
-                ", fareAmount=" + fareAmount +
                 '}';
     }
 }

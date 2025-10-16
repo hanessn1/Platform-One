@@ -6,13 +6,18 @@ import com.platformone.booking.dto.BookingRequestDTO;
 import com.platformone.booking.dto.BookingResponseDTO;
 import com.platformone.booking.entities.Booking;
 import com.platformone.booking.entities.BookingStatus;
+import com.platformone.booking.exception.ScheduleNotFoundException;
 import com.platformone.booking.external.*;
 import com.platformone.booking.repository.BookingRepository;
+import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -20,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +42,9 @@ public class BookingServiceTest {
     @Mock
     private TrainClient trainClient;
 
+    @Mock
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
     @InjectMocks
     private BookingServiceImpl bookingService;
 
@@ -47,7 +56,7 @@ public class BookingServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        booking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 3, "PNR12345", 600.0);
+        booking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 3, "PNR12345");
         bookingRequestDTO = new BookingRequestDTO(1L, 101L, 600.0);
 
         schedule = mock(Schedule.class);
@@ -95,10 +104,7 @@ public class BookingServiceTest {
             return saved;
         });
         when(bookingRepository.findByPnr(anyString())).thenReturn(Optional.of(booking));
-
-        bookingService = new BookingServiceImpl(bookingRepository, scheduleClient, trainClient);
     }
-
 
     @Test
     void testGetBookingById_Found() {
@@ -125,7 +131,7 @@ public class BookingServiceTest {
         BookingResponseDTO response = bookingService.createBooking(bookingRequestDTO);
 
         assertThat(response).isNotNull();
-        assertThat(response.getBookingStatus()).isEqualTo(BookingStatus.CONFIRMED);
+        assertThat(response.getBookingStatus()).isEqualTo(BookingStatus.PROCESSING);
 
         verify(bookingRepository).save(any(Booking.class));
         verify(scheduleClient).decrementAvailableSeats(anyLong());
@@ -138,7 +144,6 @@ public class BookingServiceTest {
         BookingRequestDTO newBooking = new BookingRequestDTO();
         newBooking.setUserId(1L);
         newBooking.setScheduleId(101L);
-        newBooking.setFareAmount(550.0);
 
         BookingResponseDTO response = bookingService.createBooking(newBooking);
 
@@ -153,13 +158,19 @@ public class BookingServiceTest {
         BookingRequestDTO newBooking = new BookingRequestDTO();
         newBooking.setUserId(1L);
         newBooking.setScheduleId(202L);
-        newBooking.setFareAmount(700.0);
 
-        when(scheduleClient.getScheduleById(202L)).thenReturn(null);
+        FeignException.NotFound notFoundException = new FeignException.NotFound(
+                "Schedule not found",
+                Request.create(Request.HttpMethod.GET, "/schedules/202", Map.of(), null, new RequestTemplate()),
+                null,
+                null
+        );
+
+        when(scheduleClient.getScheduleById(202L)).thenThrow(notFoundException);
 
         assertThatThrownBy(() -> bookingService.createBooking(newBooking))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Schedule not found");
+                .isInstanceOf(ScheduleNotFoundException.class)
+                .hasMessageContaining("Schedule not found with id: 202");
     }
 
     @Test
@@ -167,7 +178,7 @@ public class BookingServiceTest {
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Booking updatedBooking = new Booking(2L, 202L, BookingStatus.CANCELLED, 7, "NEWPNR", 700.0);
+        Booking updatedBooking = new Booking(2L, 202L, BookingStatus.CANCELLED, 7, "NEWPNR");
 
         Optional<Booking> result = bookingService.updateBooking(1L, updatedBooking);
 

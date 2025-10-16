@@ -12,4 +12,6 @@ public interface PaymentService {
     Optional<Payment> updatePayment(long paymentId, Payment updatedPayment);
 
     boolean deletePayment(long paymentId);
+
+    Payment getPaymentByBookingId(long bookingId);
 }
