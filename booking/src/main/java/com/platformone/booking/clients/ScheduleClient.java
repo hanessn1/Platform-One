@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 
-@FeignClient(name = "schedule", url = "${schedule.service.url}")
+@FeignClient(name = "schedule")
 public interface ScheduleClient {
     @GetMapping("/schedule/{scheduleId}")
     Schedule getScheduleById(@PathVariable long scheduleId);

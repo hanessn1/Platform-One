@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "train", url = "${train.service.url}")
+@FeignClient(name = "train")
 public interface TrainClient {
 
     @GetMapping("/train/search")
