@@ -37,5 +37,6 @@
 		<module>payment</module>
 		<module>booking</module>
 		<module>service-registry</module>
+		<module>config-server</module>
 	</modules>
 </project>
