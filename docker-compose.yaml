@@ -20,3 +20,40 @@ services:
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
             KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
             KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+    zipkin:
+        container_name: zipkin
+        image: openzipkin/zipkin
+        ports:
+            -   "9411:9411"
+
+    prometheus:
+        image: prom/prometheus:latest
+        container_name: prometheus
+        ports:
+            - "9090:9090"
+        volumes:
+            - ./monitoring/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
+        command:
+            - --config.file=/etc/prometheus/prometheus.yaml
+        depends_on:
+            - kafka
+            - zipkin
+
+    grafana:
+        image: grafana/grafana:latest
+        container_name: grafana
+        ports:
+            - "3000:3000"
+        environment:
+            - GF_SECURITY_ADMIN_USER=admin
+            - GF_SECURITY_ADMIN_PASSWORD=admin
+        depends_on:
+            - prometheus
+        volumes:
+            - grafana-data:/var/lib/grafana
+            - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+            - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+
+volumes:
+    grafana-data:
