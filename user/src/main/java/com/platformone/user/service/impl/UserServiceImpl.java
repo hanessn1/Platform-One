@@ -1,6 +1,7 @@
 package com.platformone.user.service.impl;
 
 import com.platformone.user.clients.PaymentClient;
+import com.platformone.user.dto.UserProfileDTO;
 import com.platformone.user.dto.WalletCreateRequestDTO;
 import com.platformone.user.entity.User;
 import com.platformone.user.exception.DuplicateEmailException;
@@ -9,7 +10,6 @@ import com.platformone.user.repository.UserRepository;
 import com.platformone.user.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -50,6 +50,18 @@ public class UserServiceImpl implements UserService {
         }
 
         return savedUser;
+    }
+
+    @Override
+    public UserProfileDTO getUserProfile(String email) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        if(user==null) return null;
+        return new UserProfileDTO(user.getUserId(),user.getName(),user.getEmail(),user.getCreatedAt());
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElse(null);
     }
 
     @Override
