@@ -6,10 +6,14 @@ import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class JwtUtils {
@@ -51,6 +55,17 @@ public class JwtUtils {
         return (String) Jwts.parser().setSigningKey(key()).build()
                 .parseClaimsJws(token)
                 .getBody().get("role");
+    }
+
+    public List<GrantedAuthority> extractAuthorities(String token) {
+        String role = extractRole(token);
+        if (role == null || role.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String authorityString = role.toUpperCase().startsWith("ROLE_") ? role.toUpperCase() : "ROLE_" + role.toUpperCase();
+        GrantedAuthority authority = new SimpleGrantedAuthority(authorityString);
+        return Collections.singletonList(authority);
     }
 
     private Key key() {
