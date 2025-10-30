@@ -1,15 +1,22 @@
 package com.platformone.payment.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.platformone.payment.config.SecurityConfig;
 import com.platformone.payment.entity.Transaction;
 import com.platformone.payment.entity.TransactionType;
 import com.platformone.payment.exception.WalletNotFoundException;
+import com.platformone.payment.jwt.CustomAccessDeniedHandler;
+import com.platformone.payment.jwt.JwtAuthenticationEntryPoint;
+import com.platformone.payment.jwt.JwtUtils;
 import com.platformone.payment.service.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,7 +30,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TransactionController.class)
+@Import(SecurityConfig.class)
 class TransactionControllerIntegrationTest {
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @MockitoBean
+    private CustomAccessDeniedHandler accessDeniedHandler;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,6 +62,7 @@ class TransactionControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetTransactionById_Success() throws Exception {
         when(transactionService.getTransactionById(1L)).thenReturn(transaction);
 
@@ -55,6 +75,7 @@ class TransactionControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetTransactionById_NotFound() throws Exception {
         when(transactionService.getTransactionById(99L)).thenReturn(null);
 
@@ -63,6 +84,7 @@ class TransactionControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testCreateTransaction() throws Exception {
         Transaction transaction = new Transaction(1L, 100L, 200.0, TransactionType.DEBIT);
         Transaction savedTransaction = new Transaction(1L, 100L, 200.0, TransactionType.DEBIT);
@@ -80,6 +102,7 @@ class TransactionControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateTransaction_Success() throws Exception {
         Transaction updatedTransaction = new Transaction(2L, 200L, 750.0, TransactionType.CREDIT);
 
@@ -97,6 +120,7 @@ class TransactionControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateTransaction_NotFound() throws Exception {
         Transaction updatedTransaction = new Transaction(2L, 200L, 750.0, TransactionType.CREDIT);
 
@@ -110,6 +134,7 @@ class TransactionControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteTransaction_Success() throws Exception {
         when(transactionService.deleteTransaction(1L)).thenReturn(true);
 
@@ -119,6 +144,7 @@ class TransactionControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteTransaction_NotFound() throws Exception {
         when(transactionService.deleteTransaction(99L)).thenReturn(false);
 
@@ -128,6 +154,7 @@ class TransactionControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetTransactionsByWallet_Success() throws Exception {
         List<Transaction> transactions = List.of(transaction);
 
@@ -146,6 +173,7 @@ class TransactionControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetTransactionsByWallet_WalletNotFound() throws Exception {
         long walletId = 2002L;
 

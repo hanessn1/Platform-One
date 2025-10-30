@@ -6,6 +6,7 @@ import com.platformone.schedule.service.ScheduleService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -31,12 +32,14 @@ public class ScheduleController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Schedule> createSchedule(@RequestBody Schedule schedule) {
         Schedule savedSchedule = scheduleService.createSchedule(schedule);
         return new ResponseEntity<>(savedSchedule, HttpStatus.CREATED);
     }
 
     @PutMapping("/{scheduleId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Schedule> updateSchedule(@PathVariable long scheduleId, @RequestBody Schedule updatedSchedule) {
         Optional<Schedule> schedule = scheduleService.updateSchedule(scheduleId, updatedSchedule);
         if (schedule.isPresent())
@@ -46,6 +49,7 @@ public class ScheduleController {
     }
 
     @DeleteMapping("/{scheduleId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteSchedule(@PathVariable long scheduleId) {
         boolean deleted = scheduleService.deleteSchedule(scheduleId);
         if (deleted)

@@ -3,14 +3,21 @@ package com.platformone.schedule.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.platformone.schedule.config.SecurityConfig;
 import com.platformone.schedule.dto.ScheduleSearchResponseDTO;
 import com.platformone.schedule.entity.Schedule;
 import com.platformone.schedule.external.TrainType;
+import com.platformone.schedule.jwt.CustomAccessDeniedHandler;
+import com.platformone.schedule.jwt.JwtAuthenticationEntryPoint;
+import com.platformone.schedule.jwt.JwtUtils;
 import com.platformone.schedule.service.ScheduleService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,7 +33,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest
+@Import(SecurityConfig.class)
 public class ScheduleControllerIntegrationTests {
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @MockitoBean
+    private CustomAccessDeniedHandler accessDeniedHandler;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -38,6 +58,7 @@ public class ScheduleControllerIntegrationTests {
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void getScheduleById_found() throws Exception {
         Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 90, 1000.0);
 
@@ -49,6 +70,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void getScheduleById_notFound() throws Exception {
         when(scheduleService.getScheduleById(999L)).thenReturn(null);
 
@@ -57,6 +79,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createSchedule_success() throws Exception {
         Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 90,1000.0);
 
@@ -70,6 +93,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void updateSchedule_found() throws Exception {
         Schedule updatedSchedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 120, 110,1000.0);
 
@@ -84,6 +108,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void updateSchedule_notFound() throws Exception {
         Schedule updatedSchedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 120, 110,1000.0);
 
@@ -97,6 +122,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteSchedule_success() throws Exception {
         when(scheduleService.deleteSchedule(123L)).thenReturn(true);
 
@@ -106,6 +132,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteSchedule_notFound() throws Exception {
         when(scheduleService.deleteSchedule(999L)).thenReturn(false);
 
@@ -115,6 +142,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void findSchedulesBySrcDestDate_success() throws Exception {
         ScheduleSearchResponseDTO dto = new ScheduleSearchResponseDTO(
                 123L, 1L, "Rajdhani Express", TrainType.EXPRESS,
@@ -137,6 +165,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void decrementAvailableSeats_success() throws Exception {
         Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 89,1000.0);
 
@@ -148,6 +177,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void decrementAvailableSeats_failure() throws Exception {
         when(scheduleService.decrementAvailableSeats(999L)).thenReturn(Optional.empty());
 
@@ -156,6 +186,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void incrementAvailableSeats_success() throws Exception {
         Schedule schedule = new Schedule(1L, LocalDate.of(2025, 10, 6), 100, 89,1000.0);
 
@@ -167,6 +198,7 @@ public class ScheduleControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void incrementAvailableSeats_failure() throws Exception {
         when(scheduleService.incrementAvailableSeats(999L)).thenReturn(Optional.empty());
 

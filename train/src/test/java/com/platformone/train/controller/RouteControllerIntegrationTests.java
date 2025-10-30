@@ -1,18 +1,25 @@
 package com.platformone.train.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.platformone.train.config.SecurityConfig;
 import com.platformone.train.dto.RouteCreateRequest;
 import com.platformone.train.dto.RouteUpdateRequest;
 import com.platformone.train.entity.Route;
 import com.platformone.train.entity.Station;
 import com.platformone.train.entity.Train;
 import com.platformone.train.entity.TrainType;
+import com.platformone.train.jwt.CustomAccessDeniedHandler;
+import com.platformone.train.jwt.JwtAuthenticationEntryPoint;
+import com.platformone.train.jwt.JwtUtils;
 import com.platformone.train.service.RouteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,7 +32,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RouteController.class)
+@Import(SecurityConfig.class)
 public class RouteControllerIntegrationTests {
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @MockitoBean
+    private CustomAccessDeniedHandler accessDeniedHandler;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -50,6 +69,7 @@ public class RouteControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetRouteById_Success() throws Exception {
         when(routeService.getRouteById(1L)).thenReturn(route);
 
@@ -60,6 +80,7 @@ public class RouteControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetRouteById_NotFound() throws Exception {
         when(routeService.getRouteById(999L)).thenReturn(null);
 
@@ -68,6 +89,7 @@ public class RouteControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testCreateRoute() throws Exception {
         RouteCreateRequest request = new RouteCreateRequest(
                 1L, 1L,
@@ -86,6 +108,7 @@ public class RouteControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateRoute_Success() throws Exception {
         RouteUpdateRequest request = new RouteUpdateRequest(
                 1L, 1L, 2,
@@ -104,6 +127,7 @@ public class RouteControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateRoute_NotFound() throws Exception{
         RouteUpdateRequest request = new RouteUpdateRequest(
                 1L, 1L, 2,
@@ -122,6 +146,7 @@ public class RouteControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteRoute_Success() throws Exception {
         when(routeService.deleteRoute(100L)).thenReturn(true);
 
@@ -131,6 +156,7 @@ public class RouteControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteRoute_NotFound() throws Exception {
         when(routeService.deleteRoute(999L)).thenReturn(false);
 

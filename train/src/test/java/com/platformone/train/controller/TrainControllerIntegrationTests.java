@@ -5,6 +5,9 @@ import com.platformone.train.entity.Route;
 import com.platformone.train.entity.Station;
 import com.platformone.train.entity.Train;
 import com.platformone.train.entity.TrainType;
+import com.platformone.train.jwt.CustomAccessDeniedHandler;
+import com.platformone.train.jwt.JwtAuthenticationEntryPoint;
+import com.platformone.train.jwt.JwtUtils;
 import com.platformone.train.repository.RouteRepository;
 import com.platformone.train.repository.StationRepository;
 import com.platformone.train.repository.TrainRepository;
@@ -14,6 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -25,6 +31,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 public class TrainControllerIntegrationTests {
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @MockitoBean
+    private CustomAccessDeniedHandler accessDeniedHandler;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
+
     @Autowired
     private TrainRepository trainRepository;
 
@@ -61,6 +79,7 @@ public class TrainControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetTrainById_Success() throws Exception {
         mockMvc.perform(get("/train/" + train.getTrainId()))
                 .andExpect(status().isOk())
@@ -68,12 +87,14 @@ public class TrainControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetTrainById_NotFound() throws Exception {
         mockMvc.perform(get("/train/999"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testCreateTrain() throws Exception {
         Train newTrain = new Train("Duronto Express",TrainType.EXPRESS);
         mockMvc.perform(post("/train")
@@ -88,6 +109,7 @@ public class TrainControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateTrain_Success() throws Exception {
         Train savedTrain = trainRepository.save(train);
         Train updatePayload = new Train();
@@ -105,6 +127,7 @@ public class TrainControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateTrain_NotFound() throws Exception {
         long invalidId = 999L;
         Train updatePayload = new Train();
@@ -118,6 +141,7 @@ public class TrainControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteTrain_Success() throws Exception {
         mockMvc.perform(delete("/train/" + train.getTrainId()))
                 .andExpect(status().isOk())
@@ -125,6 +149,7 @@ public class TrainControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteTrain_NotFound() throws Exception {
         long invalidId = 999L;
         mockMvc.perform(delete("/train/" + invalidId))
@@ -133,6 +158,7 @@ public class TrainControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetTrainBySrcDest() throws Exception {
         Station src = stationRepository.save(new Station("Howrah", "HWH", "Kolkata", "WB"));
         Station dest = stationRepository.save(new Station("Delhi", "NDLS", "Delhi", "DL"));
@@ -157,6 +183,7 @@ public class TrainControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetRoutesByTrainId_Success() throws Exception {
         mockMvc.perform(get("/train/" + train.getTrainId() + "/route"))
                 .andExpect(status().isOk())
@@ -166,6 +193,7 @@ public class TrainControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetRoutesByTrainId_NotFound() throws Exception {
         long invalidId = 999L;
         mockMvc.perform(get("/train/" + invalidId + "/route"))

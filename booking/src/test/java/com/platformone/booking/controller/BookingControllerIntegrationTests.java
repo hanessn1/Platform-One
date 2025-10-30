@@ -1,16 +1,23 @@
 package com.platformone.booking.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.platformone.booking.config.SecurityConfig;
 import com.platformone.booking.dto.BookingRequestDTO;
 import com.platformone.booking.dto.BookingResponseDTO;
 import com.platformone.booking.entities.Booking;
 import com.platformone.booking.entities.BookingStatus;
+import com.platformone.booking.jwt.CustomAccessDeniedHandler;
+import com.platformone.booking.jwt.JwtAuthenticationEntryPoint;
+import com.platformone.booking.jwt.JwtUtils;
 import com.platformone.booking.service.BookingService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -24,7 +31,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest
+@Import(SecurityConfig.class)
 public class BookingControllerIntegrationTests {
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @MockitoBean
+    private CustomAccessDeniedHandler accessDeniedHandler;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -35,6 +55,7 @@ public class BookingControllerIntegrationTests {
     private ObjectMapper objectMapper;
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetBookingById_Found() throws Exception {
         Booking booking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 3, "PNR12345");
         Mockito.when(bookingService.getBookingById(1L)).thenReturn(booking);
@@ -47,6 +68,7 @@ public class BookingControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetBookingById_NotFound() throws Exception {
         Mockito.when(bookingService.getBookingById(99L)).thenReturn(null);
 
@@ -55,6 +77,7 @@ public class BookingControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testCreateBooking_Success() throws Exception {
         BookingRequestDTO request = new BookingRequestDTO(1L, 101L, 600.0);
         BookingResponseDTO response = new BookingResponseDTO();
@@ -72,6 +95,7 @@ public class BookingControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateBooking_Found() throws Exception {
         Booking updatedBooking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 4, "PNR12345");
         Mockito.when(bookingService.updateBooking(anyLong(), any(Booking.class))).thenReturn(Optional.of(updatedBooking));
@@ -84,6 +108,7 @@ public class BookingControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateBooking_NotFound() throws Exception {
         Booking updatedBooking = new Booking(1L, 101L, BookingStatus.CONFIRMED, 4, "PNR12345");
         Mockito.when(bookingService.updateBooking(anyLong(), any(Booking.class))).thenReturn(Optional.empty());
@@ -95,6 +120,7 @@ public class BookingControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteBooking_Success() throws Exception {
         Mockito.when(bookingService.deleteBooking(1L)).thenReturn(true);
 
@@ -104,6 +130,7 @@ public class BookingControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteBooking_NotFound() throws Exception {
         Mockito.when(bookingService.deleteBooking(99L)).thenReturn(false);
 
@@ -113,6 +140,7 @@ public class BookingControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetBookingByPnr_Found() throws Exception {
         BookingResponseDTO dto = new BookingResponseDTO();
         dto.setPnr("PNR12345");
@@ -127,6 +155,7 @@ public class BookingControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetBookingByPnr_NotFound() throws Exception {
         Mockito.when(bookingService.getBookingByPnr(anyString())).thenReturn(null);
 

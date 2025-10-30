@@ -24,6 +24,9 @@ public class User {
     @NotBlank(message = "Password cannot be empty")
     private String hashedPassword;
 
+    @Column(nullable = false)
+    private String role = "USER";
+
     @Column(nullable = false,updatable = false)
     private Instant createdAt;
 
@@ -79,6 +82,10 @@ public class User {
         this.hashedPassword = hashedPassword;
     }
 
+    public String getRole() {
+        return role;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -94,6 +101,7 @@ public class User {
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
                 ", hashedPassword='" + hashedPassword + '\'' +
+                ", role='" + role + '\'' +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';

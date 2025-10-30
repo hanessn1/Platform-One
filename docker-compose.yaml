@@ -55,5 +55,14 @@ services:
             - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
             - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
 
+    redis:
+        image: redis
+        container_name: redis
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis-data:/data
+
 volumes:
     grafana-data:
+    redis-data:
