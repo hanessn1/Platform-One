@@ -1,18 +1,25 @@
 package com.platformone.payment.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.platformone.payment.config.SecurityConfig;
 import com.platformone.payment.dto.WalletCreateRequestDTO;
 import com.platformone.payment.dto.WalletTransactionRequestDTO;
 import com.platformone.payment.entity.Wallet;
 import com.platformone.payment.exception.DuplicateWalletForUserException;
 import com.platformone.payment.exception.InsufficientBalanceException;
 import com.platformone.payment.exception.WalletNotFoundException;
+import com.platformone.payment.jwt.CustomAccessDeniedHandler;
+import com.platformone.payment.jwt.JwtAuthenticationEntryPoint;
+import com.platformone.payment.jwt.JwtUtils;
 import com.platformone.payment.service.WalletService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,7 +32,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(WalletController.class)
+@Import(SecurityConfig.class)
 class WalletControllerIntegrationTest {
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @MockitoBean
+    private CustomAccessDeniedHandler accessDeniedHandler;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -44,6 +63,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetWalletById_found() throws Exception {
         when(walletService.getWalletById(1L)).thenReturn(wallet);
 
@@ -54,6 +74,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetWalletById_notFound() throws Exception {
         when(walletService.getWalletById(99L)).thenReturn(null);
 
@@ -62,6 +83,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testCreateWallet_success() throws Exception {
         Wallet savedWallet = new Wallet(10L, 1000.0);
 
@@ -76,6 +98,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateWallet_found() throws Exception {
         Wallet updatedWallet = new Wallet(30L, 1500.0);
 
@@ -91,6 +114,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateWallet_notFound() throws Exception {
         Wallet updatedWallet = new Wallet(30L, 1500.0);
 
@@ -104,6 +128,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteWallet_found() throws Exception {
         when(walletService.deleteWallet(1L)).thenReturn(true);
 
@@ -113,6 +138,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteWallet_notFound() throws Exception {
         when(walletService.deleteWallet(99L)).thenReturn(false);
 
@@ -122,6 +148,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void initializeWallet_shouldReturnCreated() throws Exception {
         WalletCreateRequestDTO requestDTO = new WalletCreateRequestDTO(10L, 1000);
 
@@ -136,6 +163,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void initializeWallet_shouldReturnConflictOnDuplicateWallet() throws Exception {
         WalletCreateRequestDTO requestDTO = new WalletCreateRequestDTO(1L, 1000);
 
@@ -150,6 +178,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void addFunds_shouldReturnUpdatedWallet() throws Exception {
         WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(6000.0, 0L);
 
@@ -167,6 +196,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void addFunds_shouldReturn404IfWalletNotFound() throws Exception {
         WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(1000.0, 0L);
 
@@ -180,6 +210,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void withdrawFunds_shouldReturnUpdatedWallet() throws Exception {
         WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(2000.0, 0L);
         Wallet updatedWallet = new Wallet(1001L, 3000.0);
@@ -195,6 +226,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void withdrawFunds_shouldReturn400IfInsufficientBalance() throws Exception {
         WalletTransactionRequestDTO request = new WalletTransactionRequestDTO(10000.0, 0L);
 
@@ -208,6 +240,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void getWalletByUserId_shouldReturnWallet() throws Exception {
         when(walletService.getWalletByUserId(1001L)).thenReturn(wallet);
 
@@ -218,6 +251,7 @@ class WalletControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void getWalletByUserId_shouldReturn404IfNotFound() throws Exception {
         when(walletService.getWalletByUserId(9999L))
                 .thenThrow(new WalletNotFoundException("Wallet not found for userId 9999"));
