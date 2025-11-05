@@ -96,13 +96,13 @@ services:
         restart: unless-stopped
 
     eureka-server:
-        image: hanessn/platformone/eureka-server:01
+        image: hanessn/platformone-eureka-server:01
         container_name: eureka-server
         ports:
             - "8761:8761"
 
     config-server:
-        image: hanessn/platformone/config-server:01
+        image: hanessn/platformone-config-server:01
         container_name: config-server
         ports:
             - "8888:8888"
@@ -112,7 +112,7 @@ services:
             - eureka-server
 
     gateway:
-        image: hanessn/platformone/gateway:01
+        image: hanessn/platformone-gateway:01
         container_name: gateway
         ports:
             -   "8085:8085"
@@ -125,7 +125,7 @@ services:
 
     user:
         container_name: user
-        image: hanessn/platformone/user:01
+        image: hanessn/platformone-user:01
         ports:
             -   "8080:8080"
         environment:
@@ -135,7 +135,7 @@ services:
 
     train:
         container_name: train
-        image: hanessn/platformone/train:01
+        image: hanessn/platformone-train:01
         ports:
             - "8081:8081"
         environment:
@@ -145,7 +145,7 @@ services:
 
     schedule:
         container_name: schedule
-        image: hanessn/platformone/schedule:01
+        image: hanessn/platformone-schedule:01
         ports:
             - "8082:8082"
         environment:
@@ -155,7 +155,7 @@ services:
 
     payment:
         container_name: payment
-        image: hanessn/platformone/payment:01
+        image: hanessn/platformone-payment:01
         ports:
             - "8083:8083"
         environment:
@@ -166,7 +166,7 @@ services:
 
     booking:
         container_name: booking
-        image: hanessn/platformone/booking:01
+        image: hanessn/platformone-booking:01
         ports:
             - "8084:8084"
         environment:
