@@ -5,6 +5,9 @@ import com.platformone.train.entity.Route;
 import com.platformone.train.entity.Station;
 import com.platformone.train.entity.Train;
 import com.platformone.train.entity.TrainType;
+import com.platformone.train.jwt.CustomAccessDeniedHandler;
+import com.platformone.train.jwt.JwtAuthenticationEntryPoint;
+import com.platformone.train.jwt.JwtUtils;
 import com.platformone.train.repository.RouteRepository;
 import com.platformone.train.repository.StationRepository;
 import com.platformone.train.repository.TrainRepository;
@@ -14,6 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -25,6 +31,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 public class StationControllerIntegrationTests {
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @MockitoBean
+    private CustomAccessDeniedHandler accessDeniedHandler;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
+
     @Autowired
     private StationRepository stationRepository;
 
@@ -60,6 +78,7 @@ public class StationControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetStationById_Success() throws Exception {
         mockMvc.perform(get("/station/" + station.getStationId()))
                 .andExpect(status().isOk())
@@ -67,12 +86,14 @@ public class StationControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetStationById_NotFound() throws Exception {
         mockMvc.perform(get("/station/999"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testCreateStation() throws Exception {
         Station newStation = new Station("Howrah Junction", "HWH", "Kolkata", "West Bengal");
         mockMvc.perform(post("/station")
@@ -87,6 +108,7 @@ public class StationControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateStation_Success() throws Exception {
         Station savedStation = stationRepository.save(station);
         Station updatePayload = new Station();
@@ -106,6 +128,7 @@ public class StationControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testUpdateStation_Failure() throws Exception {
         long invalidId = 999L;
         Station updatePayload = new Station();
@@ -121,6 +144,7 @@ public class StationControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteStation_Success() throws Exception {
         mockMvc.perform(delete("/station/" + station.getStationId()))
                 .andExpect(status().isOk())
@@ -128,6 +152,7 @@ public class StationControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDeleteStation_Failure() throws Exception {
         long invalidId = 999L;
         mockMvc.perform(delete("/station/" + invalidId))
@@ -136,6 +161,7 @@ public class StationControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetRoutesByStationId_Success() throws Exception {
         mockMvc.perform(get("/station/" + station.getStationId() + "/route"))
                 .andExpect(status().isOk())
@@ -145,6 +171,7 @@ public class StationControllerIntegrationTests {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetRoutesByStationId_NotFound() throws Exception {
         long invalidId = 999L;
         mockMvc.perform(get("/station/" + invalidId + "/route"))

@@ -55,5 +55,50 @@ services:
             - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
             - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
 
+    redis:
+        image: redis
+        container_name: redis
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis-data:/data
+
+    postgres:
+        container_name: postgres
+        image: postgres:13
+        environment:
+            POSTGRES_USER: admin
+            POSTGRES_PASSWORD: admin
+            PGDATA: /data/postgres
+        volumes:
+            - postgres:/data/postgres
+        ports:
+            - "5432:5432"
+        networks:
+            - postgres
+        restart: unless-stopped
+
+    pgadmin:
+        container_name: pgadmin
+        image: dpage/pgadmin4
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@platformone.com
+            PGADMIN_DEFAULT_PASSWORD: admin
+            PGADMIN_CONFIG_SERVER_MODE: "False"
+        volumes:
+            - pgadmin:/var/lib/pgadmin
+        ports:
+            - "5050:80"
+        networks:
+            - postgres
+        restart: unless-stopped
+
+networks:
+    postgres:
+        driver: bridge
+
 volumes:
     grafana-data:
+    redis-data:
+    postgres:
+    pgadmin:
