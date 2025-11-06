@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: postgres-init-script-configmap
+data:
+    init-db.sh: |
+        #!/bin/bash
+        set -e
+        
+        # Connect to the default 'admin' database as the 'admin' user
+        # and execute SQL commands to create all the other databases.
+        psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_USER" <<-EOSQL
+          CREATE DATABASE "user";
+          CREATE DATABASE payment;
+          CREATE DATABASE train;
+          CREATE DATABASE schedule;
+          CREATE DATABASE booking;
+        EOSQL
