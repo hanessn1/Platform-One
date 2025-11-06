@@ -1,0 +1,30 @@
+# --- ConfigMap for Zookeeper ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: zookeeper-configmap
+data:
+    ZOOKEEPER_CLIENT_PORT: "2181"
+    ZOOKEEPER_TICK_TIME: "2000"
+---
+# --- ConfigMap for Kafka ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: kafka-configmap
+data:
+    KAFKA_BROKER_ID: "1"
+    KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+    KAFKA_LISTENERS: "PLAINTEXT_INTERNAL://0.0.0.0:29092"
+    KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT_INTERNAL://kafka:29092"
+    KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT_INTERNAL:PLAINTEXT"
+    KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT_INTERNAL"
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+---
+# --- ConfigMap for Postgres ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: postgres-configmap
+data:
+    PGDATA: "/data/postgres"
