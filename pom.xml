@@ -36,7 +36,7 @@
 		<module>schedule</module>
 		<module>payment</module>
 		<module>booking</module>
-		<module>service-registry</module>
+		<module>eureka-server</module>
 		<module>config-server</module>
 		<module>gateway</module>
 	</modules>

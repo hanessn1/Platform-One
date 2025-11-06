@@ -1,10 +1,10 @@
-package com.platformone.service_registry;
+package com.platformone.eureka_server;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ServiceRegistryApplicationTests {
+class EurekaServerApplicationTests {
 
 	@Test
 	void contextLoads() {

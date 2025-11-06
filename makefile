@@ -12,6 +12,10 @@ all: build
 docker-start:
 	docker compose up -d
 
+# start test containers
+docker-start-test:
+	docker compose up zookeeper kafka -d
+
 # Stop all containers
 docker-stop:
 	docker compose down

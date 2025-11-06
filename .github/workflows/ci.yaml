@@ -58,7 +58,7 @@ jobs:
                     path: target
 
             -   name: Start containers
-                run: make docker-start
+                run: make docker-start-test
 
             -   name: Run tests
                 run: mvn test

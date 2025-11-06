@@ -12,13 +12,19 @@ services:
         image: confluentinc/cp-kafka:7.5.0
         container_name: kafka
         ports:
+            # Port for your HOST machine (e.g., local debugging)
             - "9092:9092"
+            # Port for OTHER CONTAINERS
+            - "29092:29092"
         depends_on:
             - zookeeper
         environment:
             KAFKA_BROKER_ID: 1
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_INTERNAL:PLAINTEXT,PLAINTEXT_EXTERNAL:PLAINTEXT
+            KAFKA_LISTENERS: PLAINTEXT_INTERNAL://0.0.0.0:29092,PLAINTEXT_EXTERNAL://0.0.0.0:9092
+            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_INTERNAL://kafka:29092,PLAINTEXT_EXTERNAL://localhost:9092
+            KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
             KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
     zipkin:
@@ -74,8 +80,6 @@ services:
             - postgres:/data/postgres
         ports:
             - "5432:5432"
-        networks:
-            - postgres
         restart: unless-stopped
 
     pgadmin:
@@ -89,13 +93,87 @@ services:
             - pgadmin:/var/lib/pgadmin
         ports:
             - "5050:80"
-        networks:
-            - postgres
         restart: unless-stopped
 
-networks:
-    postgres:
-        driver: bridge
+    eureka-server:
+        image: hanessn/platformone-eureka-server:01
+        container_name: eureka-server
+        ports:
+            - "8761:8761"
+
+    config-server:
+        image: hanessn/platformone-config-server:01
+        container_name: config-server
+        ports:
+            - "8888:8888"
+        environment:
+            - SPRING_PROFILES_ACTIVE=docker
+        depends_on:
+            - eureka-server
+
+    gateway:
+        image: hanessn/platformone-gateway:01
+        container_name: gateway
+        ports:
+            -   "8085:8085"
+        environment:
+            - SPRING_PROFILES_ACTIVE=docker
+        depends_on:
+            - eureka-server
+            - redis
+            - zipkin
+
+    user:
+        container_name: user
+        image: hanessn/platformone-user:01
+        ports:
+            -   "8080:8080"
+        environment:
+            - SPRING_PROFILES_ACTIVE=docker
+        depends_on:
+            - postgres
+
+    train:
+        container_name: train
+        image: hanessn/platformone-train:01
+        ports:
+            - "8081:8081"
+        environment:
+            - SPRING_PROFILES_ACTIVE=docker
+        depends_on:
+            - postgres
+
+    schedule:
+        container_name: schedule
+        image: hanessn/platformone-schedule:01
+        ports:
+            - "8082:8082"
+        environment:
+            - SPRING_PROFILES_ACTIVE=docker
+        depends_on:
+            - postgres
+
+    payment:
+        container_name: payment
+        image: hanessn/platformone-payment:01
+        ports:
+            - "8083:8083"
+        environment:
+            - SPRING_PROFILES_ACTIVE=docker
+        depends_on:
+            - postgres
+            - kafka
+
+    booking:
+        container_name: booking
+        image: hanessn/platformone-booking:01
+        ports:
+            - "8084:8084"
+        environment:
+            - SPRING_PROFILES_ACTIVE=docker
+        depends_on:
+            - postgres
+            - kafka
 
 volumes:
     grafana-data:
