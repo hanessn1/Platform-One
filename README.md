@@ -1,7 +1,6 @@
 # 🚂 Platform-One: A Train Booking System
 
-![platform-one.png](https://upload.wikimedia.org/wikipedia/commons/5/50/%D0%9F%D0%BE%D0%B5%D0%B7%D0%B4_%D0%BD%D0%B0_%D1%84%D0%BE%D0%BD%D0%B5_%D0%B3%D0%BE%D1%80%D1%8B_%D0%A8%D0%B0%D1%82%D1%80%D0%B8%D1%89%D0%B5._%D0%92%D0%BE%D1%80%D0%BE%D0%BD%D0%B5%D0%B6%D1%81%D0%BA%D0%B0%D1%8F_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C.jpg)
-
+![Platform-One.jpg](images/Platform-One.jpg)
 Platform-One is a complete, end-to-end microservices application for a railway booking platform. It is built entirely on
 the Spring ecosystem, containerized with Docker, and fully orchestrated on Kubernetes.
 
